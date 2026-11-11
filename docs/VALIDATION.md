@@ -1,60 +1,59 @@
-# Evidência de validação inicial
+# Initial validation evidence
 
-Data: 11/11/2026. Ambiente de execução local: Linux, Python 3.12.14,
-Zsh do ambiente e ShellCheck 0.11.0. Nenhum teste aplicou configurações ao Mac
-do utilizador, iniciou runtimes ou instalou os pacotes do catálogo.
+Date: 2026-11-11. Local execution environment: Linux, Python 3.12.14,
+the environment's Zsh and ShellCheck 0.11.0. No test applied settings to the
+user's Mac, started runtimes or installed packages from the catalog.
 
-## Concluído
+## Completed
 
-- **30 testes automatizados passaram**, incluindo TUI numa pseudo-terminal,
-  cancelamento sem escrita, gravação de toggles, validação estrita, opt-outs,
-  planos/diagnósticos sem escrita ou exposição da identidade, cópias independentes,
-  idempotência, backups, falhas de publicação, symlinks/hardlinks, integração Git,
-  falha de instalação antes da aplicação e atualização Git fast-forward/divergente.
-- Análise sintática Python com gramática 3.9; JSON dos templates e tema válidos.
-- Sintaxe Bash e POSIX shell, sintaxe Zsh, ShellCheck sem findings e whitespace Git.
-- **34 tokens únicos do catálogo confirmados** na API oficial Homebrew, sem estado
-  disabled/deprecated nas respostas observadas. Evidência em
-  `package-catalog-validation.json`. É uma consulta de disponibilidade, não um
-  teste de instalação ou de compatibilidade com cada modelo/versão macOS.
-- Instalador Homebrew obtido do commit
-  `7986efac25016e41eed7e471666140c06f9d97cf`; SHA-256 confirmado como
+- **30 automated tests passed**, including a real pseudo-terminal TUI,
+  cancellation without writes, saved toggles, strict validation, opt-outs,
+  read-only plans/diagnostics without identity disclosure, independent copies,
+  idempotency, backups, publication failures, symlinks/hardlinks, Git integration,
+  installation failure before apply and fast-forward/divergent Git updates.
+- Python syntax analysis using the 3.9 grammar; valid template and theme JSON.
+- Bash/POSIX shell and Zsh syntax, ShellCheck without findings and Git whitespace checks.
+- **34 unique catalog tokens confirmed** through the official Homebrew API, with
+  no disabled/deprecated state in the observed responses. Evidence is recorded in
+  `package-catalog-validation.json`. This checks availability, not installation
+  or compatibility with every Mac model/macOS version.
+- Homebrew installer retrieved from commit
+  `7986efac25016e41eed7e471666140c06f9d97cf`; confirmed SHA-256:
   `5f333bbe53bc490e51e7ccb1df8779b3dd6ee73a1a7379efda216edb08ccb148`.
 
-## Publicação
+## Publication
 
-- Repositório privado criado pelo proprietário e publicação concluída em 11/11/2026.
-- `main` e `develop` inicializadas apenas com o README; implementação submetida no
-  [PR #1](https://github.com/abrioso/dotfiles-macos/pull/1), de `feature/initial-macos`
-  para `develop`, sem merge ou release.
-- A árvore Git da implementação publicada coincide com a validada localmente:
-  `ab24553bc6f6006b9c52ff27c2d29e927a1fe44a`. Esta nota e o README foram atualizados
-  posteriormente para registar a publicação.
-- A matriz CI foi acionada. Consultar os checks do PR para o resultado atual.
+- Private repository created by the owner; publication completed on 2026-11-11.
+- `main` and `develop` initialized with only the README; implementation submitted
+  in [PR #1](https://github.com/abrioso/dotfiles-macos/pull/1), from
+  `feature/initial-macos` to `develop`, without a merge or release.
+- The initially published implementation tree matched the locally validated tree:
+  `ab24553bc6f6006b9c52ff27c2d29e927a1fe44a`. Documentation was subsequently updated
+  to record publication, and repository content was translated into English.
+- The CI matrix was triggered. Check the PR's checks for the current result.
 
-## Pendente
+## Pending
 
-- Conclusão da matriz CI no GitHub.
-- Validação real em macOS Apple Silicon/Intel e PowerShell; a CI inclui parsing
-  PowerShell, mas o executável não estava disponível no ambiente local.
-- Aceitação no Mac, incluindo fonte, perfis gráficos, aplicações, permissões,
-  eventual runtime Docker e reposição conforme `ACCEPTANCE.md`.
-- Configuração/verificação das regras de proteção de branches no GitHub.
+- Completion of the GitHub CI matrix.
+- Actual macOS Apple Silicon/Intel and PowerShell validation. CI includes
+  PowerShell parsing, but the executable was unavailable in the local environment.
+- Mac acceptance, including font selection, terminal profiles, applications,
+  permissions, any Docker runtime and restoration according to `ACCEPTANCE.md`.
+- Configuration/verification of GitHub branch protection rules.
 
-Não foi criada uma tag de release. Os testes não demonstram compatibilidade com
-todo o parque macOS, nem substituem revisão e aceitação do commit que for publicado.
+No release tag has been created. These tests do not establish compatibility with
+all macOS systems or replace review and acceptance of the published commit.
 
-## Fontes técnicas consultadas
+## Technical sources consulted
 
-- [Homebrew: instalação e plataformas](https://docs.brew.sh/Installation)
-- [Homebrew: Bundle e ausência de lockfile](https://docs.brew.sh/Brew-Bundle-and-Brewfile)
-- [Homebrew: API de fórmulas/casks](https://formulae.brew.sh/docs/api/)
-- [Homebrew: plugin Docker Compose](https://formulae.brew.sh/formula/docker-compose)
-- [Microsoft: PowerShell no macOS](https://learn.microsoft.com/powershell/scripting/install/install-powershell-on-macos)
-- [Microsoft: PowerShell via Homebrew](https://learn.microsoft.com/en-us/powershell/scripting/install/alternate-install-methods)
-- [Microsoft: Azure CLI no macOS](https://learn.microsoft.com/cli/azure/install-azure-cli-macos)
-- [GitHub: imagens de runners](https://github.com/actions/runner-images)
+- [Homebrew: installation and platforms](https://docs.brew.sh/Installation)
+- [Homebrew: Bundle and the absence of a lockfile](https://docs.brew.sh/Brew-Bundle-and-Brewfile)
+- [Homebrew: formula/cask API](https://formulae.brew.sh/docs/api/)
+- [Homebrew: Docker Compose plugin](https://formulae.brew.sh/formula/docker-compose)
+- [Microsoft: PowerShell on macOS](https://learn.microsoft.com/powershell/scripting/install/install-powershell-on-macos)
+- [Microsoft: PowerShell through Homebrew](https://learn.microsoft.com/en-us/powershell/scripting/install/alternate-install-methods)
+- [Microsoft: Azure CLI on macOS](https://learn.microsoft.com/cli/azure/install-azure-cli-macos)
+- [GitHub: runner images](https://github.com/actions/runner-images)
 
-Estas fontes foram usadas para resolver alterações atuais de empacotamento e
-confirmar os rótulos da matriz CI. Voltar a verificar quando forem atualizados
-os pré-requisitos, os pacotes ou as versões de macOS suportadas.
+These sources resolved current packaging changes and confirmed CI matrix labels.
+Recheck them when updating prerequisites, packages or supported macOS versions.

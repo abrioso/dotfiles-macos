@@ -1,24 +1,24 @@
-# Configuração e operação
+# Configuration and operation
 
-## Primeira utilização
+## First use
 
-1. Confirmar `uname -m` e `sw_vers -productVersion`; usar Terminal sem Rosetta.
-2. Instalar as Apple Command Line Tools com `xcode-select --install`, se necessário.
-3. Obter o repositório e permanecer no checkout pretendido. Antes da primeira
-   release, usar a branch de implementação/revisão indicada no README.
-4. Rever e executar `./setup-scripts/bootstrap.sh`. Se Homebrew estiver ausente,
-   voltar a executar com `--install-homebrew`. O instalador oficial é descarregado
-   para um ficheiro, verificado por SHA-256 e só depois executado. Pode pedir sudo.
-5. Executar o comando `export PATH=...` apresentado, se necessário. O script não
-   consegue alterar o ambiente do terminal que o chamou.
-6. Executar `./setup-scripts/configure.sh`. Setas movem, espaço alterna, S guarda,
-   Q/Esc cancela sem escrever ficheiros. A janela deve ter pelo menos 35×8.
-7. Editar `dotfiles-configurations/config.json` para preencher `user.name` e
-   `user.email`. Campos vazios preservam a identidade Git existente.
-8. Rever `./setup-scripts/setup.sh --plan` e aplicar com `./setup-scripts/setup.sh`.
-9. Abrir um terminal novo e executar `./setup-scripts/verify.sh --check-packages`.
+1. Check `uname -m` and `sw_vers -productVersion`; use Terminal without Rosetta.
+2. Install Apple Command Line Tools with `xcode-select --install` if needed.
+3. Obtain the repository and stay on the intended checkout. Before the first
+   release, use the implementation/review branch indicated in the README.
+4. Review and run `./setup-scripts/bootstrap.sh`. If Homebrew is missing, rerun
+   with `--install-homebrew`. The official installer is downloaded to a file,
+   verified using SHA-256 and only then executed. It may request sudo.
+5. Run the printed `export PATH=...` command if needed. The script cannot change
+   the environment of its parent terminal.
+6. Run `./setup-scripts/configure.sh`. Arrows move, Space toggles, S saves and
+   Q/Esc cancels without writing files. The window must be at least 35 by 8.
+7. Edit `dotfiles-configurations/config.json` to set `user.name` and `user.email`.
+   Empty fields preserve the existing Git identity.
+8. Review `./setup-scripts/setup.sh --plan`, then apply with `./setup-scripts/setup.sh`.
+9. Open a new terminal and run `./setup-scripts/verify.sh --check-packages`.
 
-Para criar a configuração sem TUI:
+To create configuration without the TUI:
 
 ```sh
 ./setup-scripts/configure.sh --defaults
@@ -26,84 +26,85 @@ Para criar a configuração sem TUI:
 ./setup-scripts/setup.sh --yes
 ```
 
-`--defaults` inicializa ficheiros em falta e conserva as escolhas guardadas;
-não significa repor valores de fábrica. `--yes` aceita a aplicação dos dotfiles,
-mas não suprime prompts do Homebrew, macOS, instaladores ou licenças de aplicações.
-Não executar setup com sudo. Se Python tiver sido instalado via Homebrew, uma
-janela nova pode precisar do PATH indicado pelo bootstrap antes da aplicação do Zsh.
+`--defaults` initializes missing files and preserves saved choices; it does not
+reset settings to factory defaults. `--yes` accepts the dotfiles apply operation
+but does not suppress prompts from Homebrew, macOS, installers or application
+licenses. Do not run setup with sudo. If Python was installed through Homebrew,
+a new terminal may need the PATH printed by bootstrap before Zsh configuration
+has been applied.
 
-## Modelo dos ficheiros
+## File model
 
-`config.json.example` e `packages.json.example` são versionados. As cópias sem
-`.example` são privadas e ignoradas pelo Git. Arrays vazios significam seleção
-vazia; valores desconhecidos, chaves duplicadas e dependências inválidas falham.
-Um catálogo local pode retirar pacotes de um grupo sem alterar o template partilhado.
+`config.json.example` and `packages.json.example` are tracked. Copies without
+`.example` are private and ignored by Git. Empty arrays mean no selection;
+unknown values, duplicate keys and invalid dependencies fail validation.
+A local catalog can remove packages from a group without changing the shared template.
 
-O módulo `pwsh` requer o grupo homónimo. Docker Desktop e Colima são mutuamente
-exclusivos na seleção; mudar a seleção não migra os dados do runtime anterior.
-Rever manualmente instalações existentes e contextos Docker antes de mudar.
+The `pwsh` module requires the package group of the same name. Docker Desktop
+and Colima are mutually exclusive selections. Changing the selection does not
+migrate data from the previous runtime. Review existing installations and Docker
+contexts manually before switching.
 
-As configurações são específicas de cada máquina. Não colocar tokens em templates,
-no tema ou nos perfis versionados. Credenciais Homebrew/GitHub/Microsoft/Tailscale,
-chaves SSH, autenticação OneDrive e perfis rclone são geridos fora do repositório.
-O grupo `data` instala apenas rclone; não copia, sincroniza ou elimina dados.
+Settings are machine-specific. Do not put tokens in templates, the theme or
+tracked profiles. Homebrew/GitHub/Microsoft/Tailscale credentials, SSH keys,
+OneDrive authentication and rclone profiles are managed outside the repository.
+The `data` group only installs rclone; it does not copy, sync or delete data.
 
-## Perfis e Git
+## Profiles and Git
 
-Ficheiros aplicados:
+Deployed files:
 
-| Destino | Conteúdo |
+| Destination | Content |
 | --- | --- |
-| `~/.config/dotfiles-macos/zprofile` | Ambiente Homebrew nativo |
-| `~/.config/dotfiles-macos/zshrc` | Aliases, completion e prompt |
-| `~/.config/dotfiles-macos/theme.omp.json` | Cópia independente do tema |
-| `~/.zprofile`, `~/.zshrc` | Bloco de carregamento; conteúdo pessoal preservado |
-| `~/.config/dotfiles-macos/gitconfig` | Definições Git selecionadas |
-| `~/.gitconfig` | Bloco `[include]` gerido; outras definições preservadas |
-| `~/.config/dotfiles-macos/profile.ps1` | Perfil PowerShell opcional |
-| `~/.config/powershell/profile.ps1` | Bloco PowerShell comum aos hosts |
+| `~/.config/dotfiles-macos/zprofile` | Native Homebrew environment |
+| `~/.config/dotfiles-macos/zshrc` | Aliases, completion and prompt |
+| `~/.config/dotfiles-macos/theme.omp.json` | Independent theme copy |
+| `~/.zprofile`, `~/.zshrc` | Loader block; personal content preserved |
+| `~/.config/dotfiles-macos/gitconfig` | Selected Git settings |
+| `~/.gitconfig` | Managed `[include]` block; other settings preserved |
+| `~/.config/dotfiles-macos/profile.ps1` | Optional PowerShell profile |
+| `~/.config/powershell/profile.ps1` | PowerShell loader block shared across hosts |
 
-Alterações ao conteúdo dentro dos marcadores são substituídas na aplicação
-seguinte, depois de backup. Conteúdo fora dos marcadores é preservado. Symlinks
-nos destinos ou nos seus diretórios são recusados; marcadores incompletos ou
-duplicados também. Configurações `ZDOTDIR`, `XDG_CONFIG_HOME` personalizadas e
-layouts Git XDG-only podem exigir integração manual, conforme o módulo.
+Changes inside the markers are replaced on the next apply, after backup.
+Content outside the markers is preserved. Symlinks in destinations or their
+parent directories are rejected, as are incomplete or duplicate markers.
+Custom `ZDOTDIR`, `XDG_CONFIG_HOME` and XDG-only Git layouts may require manual
+integration, depending on the module.
 
-O include Git é inserido no fim na primeira aplicação. Pode sobrepor valores
-anteriores das mesmas chaves, mas não elimina o texto anterior. Ficheiros incluídos
-ou definições posteriores podem prevalecer; `verify` identifica essa divergência.
-Não se impõe `core.ignorecase` nem `core.filemode`. Para segredos/ajustes privados,
-carregar um ficheiro local explicitamente fora do bloco gerido.
+The Git include is appended on first apply. It may override earlier values
+for the same keys without deleting the original text. Included files or later
+settings may take precedence; `verify` detects that drift. Neither `core.ignorecase`
+nor `core.filemode` is imposed. Explicitly load private settings from a local
+file outside the managed block.
 
-Selecionar manualmente a fonte **CaskaydiaCove Nerd Font** nas preferências do
-Terminal/iTerm2 ou do VS Code, se pretendido. O script instala a fonte quando
-selecionada, mas não substitui perfis gráficos ou preferências dos terminais.
-Perfis adicionais VS Code/PowerShell existentes podem alterar o prompt depois
-do perfil comum; confirmar ambos os terminais na aceitação.
+Manually select **CaskaydiaCove Nerd Font** in Terminal/iTerm2 or VS Code settings
+if desired. The script installs the font when selected but does not replace
+terminal profiles or preferences. Existing VS Code/PowerShell host profiles may
+change the prompt after the common profile; check both during acceptance.
 
-## PowerShell e Azure
+## PowerShell and Azure
 
-O catálogo usa `brew "powershell"`, atualmente uma compilação da comunidade
-Homebrew. Para suporte Microsoft, preferir o PKG assinado/notarizado indicado na
-[documentação oficial](https://learn.microsoft.com/powershell/scripting/install/install-powershell-on-macos).
-Nesse caso, instalar o PKG manualmente e remover `powershell` da lista `formulae`
-do grupo `pwsh` no JSON local, mantendo `oh-my-posh` e o módulo `pwsh`.
-Não sobrepor instalações anteriores de origens diferentes sem as rever.
+The catalog uses `brew "powershell"`, currently a Homebrew community build.
+For Microsoft support, prefer the signed/notarized PKG described in the
+[official documentation](https://learn.microsoft.com/powershell/scripting/install/install-powershell-on-macos).
+In that case, install the PKG manually and remove `powershell` from the `formulae`
+list in the local `pwsh` package group, keeping `oh-my-posh` and the `pwsh` module.
+Do not overlay existing installations from different sources without reviewing them.
 
-Azure CLI usa o cask `azure-cli`. Azure Developer CLI (`azd`) não integra esta
-primeira versão. A migração de uma instalação antiga de Azure CLI por fórmula
-fica para intervenção explícita, segundo a documentação Microsoft.
+Azure CLI uses the `azure-cli` cask. Azure Developer CLI (`azd`) is outside this
+initial version. Migrating an older formula-based Azure CLI installation requires
+explicit intervention following Microsoft's documentation.
 
 ## Docker
 
-Docker Desktop instala a aplicação; o primeiro arranque, licença, permissões,
-recursos e início automático ficam para configuração manual. Nenhum container
-do `akb-docker-stack` é lançado por este repositório.
+Docker Desktop installs the application; initial launch, licensing, permissions,
+resources and automatic startup are configured manually. This repository does
+not launch any `akb-docker-stack` containers.
 
-Colima instala `colima`, `docker` e `docker-compose`, mas não cria/inicia uma VM.
-Para a primeira utilização, rever os recursos pretendidos e executar `colima start`.
-Segundo as instruções Homebrew, o plugin Compose pode precisar de
-`cliPluginsExtraDirs` no ficheiro `~/.docker/config.json`:
+Colima installs `colima`, `docker` and `docker-compose` without creating/starting
+a VM. For first use, review the intended resources and run `colima start`.
+According to Homebrew's instructions, the Compose plugin may need
+`cliPluginsExtraDirs` in `~/.docker/config.json`:
 
 ```json
 {
@@ -111,13 +112,13 @@ Segundo as instruções Homebrew, o plugin Compose pode precisar de
 }
 ```
 
-Em Intel, o caminho é `/usr/local/lib/docker/cli-plugins`. **Integrar a chave no
-JSON existente; não substituir o ficheiro**, que pode conter autenticação e
-outros contextos. Confirmar `docker context ls`, `docker info` e
-`docker compose version` antes de utilizar stacks. O diagnóstico desta versão
-confirma presença de pacotes, não saúde do daemon ou equivalência entre runtimes.
+On Intel, use `/usr/local/lib/docker/cli-plugins`. **Merge the key into the
+existing JSON; do not replace the file**, which may contain authentication and
+other contexts. Check `docker context ls`, `docker info` and `docker compose version`
+before using stacks. This version's diagnostics check package presence, not daemon
+health or equivalence between runtimes.
 
-## Atualizações
+## Updates
 
 ```sh
 ./setup-scripts/update.sh
@@ -125,26 +126,27 @@ confirma presença de pacotes, não saúde do daemon ou equivalência entre runt
 ./setup-scripts/setup.sh
 ```
 
-`update` exige árvore limpa, branch anexada e upstream em `origin`. Faz fetch e
-fast-forward dessa branch; divergências falham. Não troca de branch nem repõe JSON
-local. Rever diferenças dos templates manualmente e incorporar apenas o necessário.
-Atualizações de pacotes são uma operação separada, por exemplo `brew outdated`
-seguido de `brew upgrade <pacote>` após revisão. Não se executa `brew bundle cleanup`.
+`update` requires a clean working tree, an attached branch and an upstream on
+`origin`. It fetches and fast-forwards that branch; divergence causes failure.
+It does not switch branches or reset local JSON. Review template differences
+manually and incorporate only what is needed. Package upgrades are separate,
+for example `brew outdated` followed by `brew upgrade <package>` after review.
+The repository does not run `brew bundle cleanup`.
 
-## Diagnóstico
+## Diagnostics
 
-`verify --json` omite valores de identidade e conteúdo de ficheiros. Os nomes
-de pacotes e chaves são apresentados. Não cria relatórios automaticamente.
+`verify --json` omits identity values and file contents. Package and key names
+are shown. Reports are not created automatically.
 
-| Código | Significado |
+| Exit code | Meaning |
 | --- | --- |
-| 0 | Todos os controlos pedidos conclusivos e conformes |
-| 1 | Pelo menos uma divergência confirmada |
-| 2 | Configuração inválida ou erro de pré-validação |
-| 3 | Sem divergência confirmada, mas com verificações inconclusivas |
-| 130 | Operação interrompida |
+| 0 | All requested checks are conclusive and conformant |
+| 1 | At least one confirmed drift finding |
+| 2 | Invalid configuration or preflight failure |
+| 3 | No confirmed drift, but some checks are inconclusive |
+| 130 | Interrupted operation |
 
-Sem `--check-packages`, os pacotes selecionados ficam inconclusivos. Com essa
-opção, consultam-se apenas listas locais do Homebrew, sem auto-update.
-Não se verificam versões exatas, integridade de bundles `.app`, licenças,
-fontes selecionadas, autenticação, conectividade ou estado de serviços.
+Without `--check-packages`, selected packages remain inconclusive. With that
+option, only local Homebrew lists are queried, without auto-update.
+Exact versions, `.app` bundle integrity, licenses, selected fonts, authentication,
+connectivity and service state are not checked.

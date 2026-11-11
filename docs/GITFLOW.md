@@ -1,19 +1,19 @@
-# Gitflow e publicação
+# Gitflow and publication
 
-`main` contém apenas releases aceites. `develop` integra o próximo ciclo.
-Trabalho normal: `feature/*` ou `fix/*` a partir de `develop`, PR para `develop`.
-Releases: `release/vYYYY.MM.N`, PR para `main`, tag depois da aceitação e
-reconciliação de alterações exclusivas de release com `develop`. Hotfixes
-partem de `main` e têm de chegar às duas branches. Nunca fazer force-push às bases.
+`main` contains accepted releases only. `develop` integrates the next cycle.
+Normal work uses `feature/*` or `fix/*` from `develop`, with a PR to `develop`.
+Releases use `release/vYYYY.MM.N`, a PR to `main`, a tag after acceptance and
+reconciliation of release-only changes into `develop`. Hotfixes start at `main`
+and must reach both branches. Never force-push to the base branches.
 
-Na inicialização deste repositório, `main` e `develop` apontam para o mesmo commit
-que contém apenas um README. Toda a implementação fica em `feature/initial-macos`.
-Publicar esse commit inicial nas duas branches é a única exceção de bootstrap.
+At initialization, `main` and `develop` point to the same README-only commit.
+All implementation work is on `feature/initial-macos`. Publishing that initial
+commit to both branches is the only bootstrap exception.
 
-## Publicar o pacote preparado
+## Publishing the prepared package
 
-O pacote de entrega contém um clone Git local completo, incluindo as três branches.
-Extrair, entrar em `dotfiles-macos` e executar, com GitHub CLI instalado:
+The delivery package contains a complete local Git repository, including all
+three branches. Extract it, enter `dotfiles-macos` and run with GitHub CLI installed:
 
 ```sh
 gh auth login --hostname github.com
@@ -21,36 +21,37 @@ gh auth setup-git --hostname github.com
 ./setup-scripts/publish.sh
 ```
 
-O script confirma a conta `abrioso`, origem, árvore limpa e histórico inicial;
-cria `abrioso/dotfiles-macos` como **privado** se ainda não existir; publica as
-bases iniciais e a feature; abre um PR para `develop`. Se existir trabalho remoto
-incompatível, para sem o sobrescrever. Não faz merge, não cria tags nem releases.
-Para o tornar público, a visibilidade deve ser alterada explicitamente pelo dono
-depois da revisão. Se o utilizador já tiver criado o repositório, mantê-lo vazio.
+The script checks the `abrioso` account, origin, clean working tree and initial
+history. It creates `abrioso/dotfiles-macos` as **private** if absent, publishes
+the initial base branches and feature, and opens a PR to `develop`. Incompatible
+remote work causes it to stop without overwriting anything. It does not merge,
+create tags or publish releases. Making the repository public requires an explicit
+visibility change by the owner after review. If creating the repository manually,
+leave it empty.
 
-Uma falha de rede pode deixar algumas etapas concluídas. É possível repetir o
-script enquanto `main` e `develop` ainda apontarem para o commit inicial; não o
-usar depois do primeiro merge em `develop`. O script reutiliza um PR já aberto.
+A network failure can leave some steps completed. The script can be rerun while
+`main` and `develop` still point to the initial commit; do not use it after the
+first merge into `develop`. It reuses an existing open PR.
 
-## Proteções recomendadas
+## Recommended protections
 
-Configurar regras do servidor para `main` e `develop`: exigir PR, proibir
-force-push/eliminação e exigir os checks `Validate (ubuntu-latest)`,
-`Validate (macos-15)` e `Validate (macos-15-intel)` depois da primeira execução.
-A disponibilidade de regras em repositórios privados depende do plano GitHub.
-Não se afirma que existam proteções do servidor enquanto não forem verificadas.
+Configure server-side rules for `main` and `develop`: require a PR, prohibit
+force-push/deletion and require `Validate (ubuntu-latest)`, `Validate (macos-15)`
+and `Validate (macos-15-intel)` after their first run. Rule availability for
+private repositories depends on the GitHub plan. Server-side protections must
+not be assumed to exist until verified.
 
-Instalar os hooks apenas neste clone:
+Install hooks only in this clone:
 
 ```sh
 git config --local core.hooksPath git-hooks
 ```
 
-`pre-push` bloqueia os nomes completos `refs/heads/main` e `refs/heads/develop`;
-não bloqueia `feature/main` ou uma tag `main`. `pre-commit` valida whitespace e
-impede a inclusão acidental dos JSON locais e de padrões de credenciais. Os hooks
-podem ser contornados e não substituem regras do servidor ou uma revisão de segredos.
+`pre-push` blocks the full refs `refs/heads/main` and `refs/heads/develop`; it does
+not block `feature/main` or a tag named `main`. `pre-commit` checks whitespace and
+prevents accidental staging of local JSON and credential filename patterns.
+Hooks can be bypassed and do not replace server-side rules or secret review.
 
-As Actions usam permissões de leitura, checkout fixado a commit e atualizações
-Dependabot para `develop`. Testes usam diretórios temporários, sem aplicar os
-dotfiles ao runner. A matriz não substitui aceitação numa conta real do Mac.
+Actions use read-only permissions, a commit-pinned checkout action and Dependabot
+updates targeting `develop`. Tests use temporary directories without applying
+dotfiles to the runner. The matrix does not replace acceptance in a real Mac account.

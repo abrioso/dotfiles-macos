@@ -1,90 +1,90 @@
 # dotfiles-macos
 
-Configuração modular de um Mac, baseada em
-[dotfiles-windows](https://github.com/abrioso/dotfiles-windows): escolhas por máquina,
-TUI com toggles, plano antes da aplicação, cópias de segurança e diagnóstico.
-Usa Homebrew, Zsh e, opcionalmente, PowerShell com o mesmo tema Oh My Posh.
+Modular Mac configuration based on
+[dotfiles-windows](https://github.com/abrioso/dotfiles-windows): per-machine choices,
+a toggle UI, preview before applying, backups and drift diagnostics.
+Uses Homebrew, Zsh and optional PowerShell with the same Oh My Posh theme.
 
-**Estado:** implementação inicial em `feature/initial-macos`, destinada a PR para
-`develop`. `main` contém apenas o ponto inicial do repositório. Ainda não existe
-uma release aceite num Mac físico. A implementação está publicada no
-[PR #1 para develop](https://github.com/abrioso/dotfiles-macos/pull/1).
-Consultar os checks desse PR antes de integrar; ver [Gitflow](docs/GITFLOW.md).
+**Status:** initial implementation on `feature/initial-macos`, targeting `develop`.
+`main` contains only the repository seed. No release has been accepted on a
+physical Mac yet. The implementation is published in
+[PR #1 to develop](https://github.com/abrioso/dotfiles-macos/pull/1).
+Check that PR's validation results before merging; see [Gitflow](docs/GITFLOW.md).
 
-## Começar
+## Getting started
 
-Alvo inicial: **macOS 15+**, Apple Silicon ou Intel, terminal nativo sem Rosetta.
-São necessários Git/Apple Command Line Tools, Homebrew e Python 3.9+. O bootstrap
-orienta a preparação e só instala Homebrew com uma opção explícita. Intel pode
-ter limitações adicionais de disponibilidade/suporte dos pacotes.
+Initial target: **macOS 15+**, Apple Silicon or Intel, using a native terminal
+without Rosetta. Git/Apple Command Line Tools, Homebrew and Python 3.9+ are
+required. Bootstrap guides prerequisite setup and installs Homebrew only with
+an explicit option. Intel may have additional package availability/support limits.
 
-Se recebeu o arquivo de entrega, extraia-o e entre na pasta `dotfiles-macos`.
-Depois da publicação, para avaliar a implementação inicial:
+If you received the delivery archive, extract it and enter `dotfiles-macos`.
+To evaluate the published initial implementation:
 
 ```sh
-xcode-select --install  # Apenas se as Command Line Tools estiverem em falta.
+xcode-select --install  # Only if Command Line Tools are missing.
 git clone --branch feature/initial-macos https://github.com/abrioso/dotfiles-macos.git
 cd dotfiles-macos
 ./setup-scripts/bootstrap.sh
-# Se necessário, rever e executar:
+# If needed, review and run:
 ./setup-scripts/bootstrap.sh --install-homebrew
-# Executar o export PATH apresentado pelo bootstrap, se necessário.
+# Run the export PATH command printed by bootstrap, if needed.
 ./setup-scripts/configure.sh
 ./setup-scripts/setup.sh --plan
 ./setup-scripts/setup.sh
 ./setup-scripts/verify.sh --check-packages
 ```
 
-Na TUI, usar **setas**, **espaço** para ativar/desativar, **S** para guardar e
-**Q/Esc** para cancelar. A gravação não instala software. O setup pede confirmação;
-`--yes` dispensa apenas essa confirmação. Não executar com sudo.
+In the TUI, use **arrow keys**, **Space** to toggle, **S** to save and **Q/Esc**
+to cancel. Saving does not install software. Setup asks for confirmation;
+`--yes` skips only that confirmation. Do not run with sudo.
 
-Os valores `user.name` e `user.email` ficam vazios no template. Preenchê-los no
-ficheiro local `dotfiles-configurations/config.json` antes de aplicar, se pretendido.
+The template leaves `user.name` and `user.email` empty. Fill them in the local
+`dotfiles-configurations/config.json` before applying, if desired.
 
-## Operações
+## Operations
 
-| Comando | Resultado |
+| Command | Result |
 | --- | --- |
-| `configure.sh` | Edita a seleção com toggles e guarda apenas no final |
-| `configure.sh --defaults` | Inicializa ficheiros em falta; preserva escolhas existentes |
-| `setup.sh --plan [--json]` | Valida e mostra intenção, sem alterações nem consultas externas |
-| `setup.sh [--yes]` | Instala pacotes em falta e aplica este checkout |
-| `verify.sh [--json] [--check-packages]` | Deteta divergências; não aplica correções |
-| `update.sh` | Atualiza apenas a branch atual, por fast-forward |
+| `configure.sh` | Edits selections with toggles; saves only when requested |
+| `configure.sh --defaults` | Initializes missing files; preserves existing choices |
+| `setup.sh --plan [--json]` | Validates and previews intent without changes or external queries |
+| `setup.sh [--yes]` | Installs missing packages and applies this checkout |
+| `verify.sh [--json] [--check-packages]` | Detects drift without applying corrections |
+| `update.sh` | Updates only the current branch, by fast-forward |
 
-Todos os comandos ficam em `setup-scripts/`. Um plano não garante que a instalação
-venha a ser possível: permissões, ficheiros existentes e disponibilidade dos pacotes
-são verificados na aplicação. Não há atualizações de pacotes ou remoções implícitas.
+All commands are in `setup-scripts/`. A plan does not guarantee installation
+will succeed: permissions, existing files and package availability are checked
+during apply. Packages are not implicitly upgraded or removed.
 
-## Seleção inicial
+## Initial selection
 
-Ativos por defeito: `base`, `terminal`, `dev`; módulos `shell` e `git`.
-O catálogo inclui grupos opcionais para PowerShell, browsers, Microsoft 365,
-Docker Desktop ou Colima, Azure CLI, multimédia, produtividade avançada,
-Tailscale, Yubico, Google Drive, Windows App e rclone.
+Enabled by default: `base`, `terminal`, `dev`; modules `shell` and `git`.
+Optional groups cover PowerShell, browsers, Microsoft 365, Docker Desktop or
+Colima, Azure CLI, multimedia, power-user tools, Tailscale, Yubico, Google Drive,
+Windows App and rclone.
 
-Desmarcar uma opção impede aplicações futuras, mas não remove software ou
-configurações já aplicadas. Docker Desktop e Colima não podem estar selecionados
-ao mesmo tempo. Nenhum runtime, serviço ou container é iniciado automaticamente.
+Deselecting an option prevents future application but does not remove previously
+installed software or configuration. Docker Desktop and Colima cannot both be
+selected. No runtime, service or container is started automatically.
 
-As preferências do Finder são opcionais. A seleção da fonte no terminal, o primeiro
-arranque das aplicações, as permissões do macOS e as autenticações são manuais.
-Não se alteram políticas de segurança ou configuração MDM.
+Finder preferences are optional. Terminal font selection, initial application
+launch, macOS permissions and authentication are manual steps.
+Security policies and MDM configuration are not changed.
 
-## Documentação e validação
+## Documentation and validation
 
-- [Arquitetura e equivalências com Windows](docs/ARCHITECTURE.md)
-- [Configuração, instalação e operação](docs/CONFIGURATION.md)
-- [Reposição e remoção](docs/ROLLBACK.md)
-- [Gitflow e publicação inicial](docs/GITFLOW.md)
-- [Aceitação num Mac](docs/ACCEPTANCE.md)
-- [Resultados e limites da validação](docs/VALIDATION.md)
+- [Architecture and Windows equivalents](docs/ARCHITECTURE.md)
+- [Configuration, installation and operation](docs/CONFIGURATION.md)
+- [Rollback and removal](docs/ROLLBACK.md)
+- [Gitflow and initial publication](docs/GITFLOW.md)
+- [Mac acceptance checklist](docs/ACCEPTANCE.md)
+- [Validation results and limitations](docs/VALIDATION.md)
 
 ```sh
 ./tests/validate.sh
 ```
 
-Os testes não provisionam o host. A CI está preparada para Linux, macOS Apple
-Silicon e macOS Intel. Hooks locais e regras de branch devem ser ativados segundo
-o guia Gitflow. Usam-se Conventional Commits e versões `vYYYY.MM.N`.
+Tests do not provision the host. CI is configured for Linux, macOS Apple Silicon
+and macOS Intel. Enable local hooks and branch rules as described in the Gitflow
+guide. Use Conventional Commits and `vYYYY.MM.N` versions.

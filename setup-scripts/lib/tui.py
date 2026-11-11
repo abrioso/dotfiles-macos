@@ -5,10 +5,10 @@ import curses
 from .config import MODULES, ConfigError, validate
 
 LABELS = {
-    "shell": "Zsh e prompt (preserva configuração existente)",
-    "git": "Git (valores pessoais no JSON local)",
-    "pwsh": "Perfil PowerShell (requer grupo pwsh)",
-    "macos": "Finder: extensões, barra de caminho e de estado",
+    "shell": "Zsh and prompt (preserves existing configuration)",
+    "git": "Git (personal values in local JSON)",
+    "pwsh": "PowerShell profile (requires the pwsh group)",
+    "macos": "Finder: file extensions, path bar and status bar",
 }
 
 
@@ -38,17 +38,17 @@ def choose(config, catalog):
             stdscr.erase()
             height, width = stdscr.getmaxyx()
             if height < 8 or width < 35:
-                stdscr.addnstr(0, 0, "Aumente a janela; Q cancela.", max(1, width - 1))
+                stdscr.addnstr(0, 0, "Enlarge the window; Q cancels.", max(1, width - 1))
                 if stdscr.getch() in (ord("q"), ord("Q"), 27):
                     return None
                 continue
-            stdscr.addnstr(0, 0, "dotfiles-macos | Configuração por máquina", width - 1)
-            stdscr.addnstr(1, 0, "↑/↓ mover | Espaço alternar | S guardar | Q cancelar", width - 1)
+            stdscr.addnstr(0, 0, "dotfiles-macos | Per-machine configuration", width - 1)
+            stdscr.addnstr(1, 0, "↑/↓ move | Space toggle | S save | Q cancel", width - 1)
             visible = height - 5
             start = max(0, min(index - visible + 1, len(rows) - visible))
             for line, (key, name, description) in enumerate(rows[start:start + visible], 3):
                 checked = "x" if name in draft[key] else " "
-                text = "[" + checked + "] " + ("Módulo " if key == "modules" else "") + name + " — " + description
+                text = "[" + checked + "] " + ("Module " if key == "modules" else "") + name + " — " + description
                 style = curses.A_REVERSE if line - 3 + start == index else curses.A_NORMAL
                 stdscr.addnstr(line, 0, text, width - 1, style)
             stdscr.addnstr(height - 1, 0, message, width - 1)
@@ -59,7 +59,7 @@ def choose(config, catalog):
                 index = (index + 1) % len(rows)
             elif key == ord(" "):
                 toggle(draft, rows[index][0], rows[index][1])
-                message = "Alterações ainda não guardadas."
+                message = "Changes have not been saved yet."
             elif key in (ord("q"), ord("Q"), 27):
                 return None
             elif key in (ord("s"), ord("S")):

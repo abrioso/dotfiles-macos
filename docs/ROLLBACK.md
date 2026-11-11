@@ -1,31 +1,31 @@
-# Reposição e remoção
+# Rollback and removal
 
-Cada aplicação com alterações cria um diretório privado em
-`~/.local/state/dotfiles-macos/backups/<timestamp>-<sufixo>`. O caminho é mostrado
-também quando uma fase falha. Repetições sem alterações não criam novo backup.
-Os backups podem conter dados pessoais existentes nos perfis: não os publicar.
+Each apply operation that changes files creates a private directory under
+`~/.local/state/dotfiles-macos/backups/<timestamp>-<suffix>`. Its path is also
+printed when a phase fails. Unchanged reruns do not create another backup.
+Backups may contain personal data from existing profiles; do not publish them.
 
-`manifest.json` identifica destinos, existência anterior, cópia de segurança e
-permissões anteriores. Antes de repor, fechar os terminais afetados e guardar
-quaisquer alterações realizadas depois da aplicação. Para cada entrada com
-`existed: true`, comparar o ficheiro `.bak` com o destino e copiar a versão
-pretendida. Repor as permissões originais indicadas no campo `mode` (valor decimal).
-Para entradas com `existed: false`, remover apenas o ficheiro criado se continuar
-sem alterações pessoais e já não for necessário. Não eliminar diretórios inteiros.
+`manifest.json` records destinations, prior existence, backup copies and previous
+permissions. Before restoring, close affected terminals and preserve changes made
+since the apply operation. For each entry with `existed: true`, compare the `.bak`
+file with its destination and copy the intended version. Restore the original
+permissions recorded in `mode` (a decimal value). For entries with `existed: false`,
+remove only the created file if it still has no personal changes and is no longer
+needed. Do not delete entire directories.
 
-Para remover só a integração, retirar os blocos delimitados por
-`# >>> dotfiles-macos >>>` e `# <<< dotfiles-macos <<<` de `.zshrc`, `.zprofile`,
-`.gitconfig` e/ou `~/.config/powershell/profile.ps1`. Preservar o restante conteúdo.
-Retirar o include Git antes de remover o ficheiro `gitconfig` gerido. As cópias
-em `~/.config/dotfiles-macos` podem então ser revistas e removidas individualmente.
+To remove only the integration, remove blocks delimited by
+`# >>> dotfiles-macos >>>` and `# <<< dotfiles-macos <<<` from `.zshrc`, `.zprofile`,
+`.gitconfig` and/or `~/.config/powershell/profile.ps1`. Preserve all other content.
+Remove the Git include before deleting the managed `gitconfig` file. Copies
+under `~/.config/dotfiles-macos` can then be reviewed and removed individually.
 
-`macos-preferences.json`, quando existe, guarda o valor anterior de cada preferência
-alterada. Para uma chave que não existia, usar `defaults delete <domain> <key>`;
-para uma chave que existia, usar `defaults write <domain> <key> -bool true|false`
-com o valor anterior. Só executar para as chaves registadas e depois de comparar
-com o estado atual. Pode ser necessário terminar sessão para refletir o resultado.
+When present, `macos-preferences.json` records each changed preference's previous
+value. For a key that did not exist, use `defaults delete <domain> <key>`;
+for an existing key, use `defaults write <domain> <key> -bool true|false`
+with its previous value. Run these commands only for recorded keys and after
+comparing their current state. Logging out may be necessary to reflect the result.
 
-Não existe rollback automático global: poderia eliminar alterações posteriores.
-A reposição dos ficheiros não remove pacotes Homebrew nem dados de aplicações.
-Rever individualmente qualquer desinstalação. Não usar `brew bundle cleanup`
-para este efeito; o catálogo cobre apenas parte do software da máquina.
+There is no automatic global rollback because it could erase later changes.
+Restoring files does not remove Homebrew packages or application data.
+Review each uninstall individually. Do not use `brew bundle cleanup` for this
+purpose; the catalog covers only part of the software installed on the machine.

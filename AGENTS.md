@@ -13,7 +13,9 @@ release until the macOS acceptance checklist is completed. Do not auto-merge.
 Run `./tests/validate.sh` and `git diff --check` before committing. Changes to
 bootstrap or deployment must include tests for failure preservation. Keep Python
 compatible with 3.9+, shell wrappers compatible with Apple's Bash 3.2, and Zsh
-files compatible with the system shell. Use English identifiers and comments.
+files compatible with the system shell. Use English for all repository content,
+including documentation, UI messages, package descriptions, identifiers and comments.
+Preserve proper names and Unicode test fixtures when they exercise encoding support.
 
 Keep plan and verify read-only. Apply must use this checkout without fetching.
 Never commit local JSON, credentials, backups, logs or machine identifiers.
