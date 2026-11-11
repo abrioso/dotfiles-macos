@@ -32,6 +32,10 @@ leave it empty.
 A network failure can leave some steps completed. The script can be rerun while
 `main` and `develop` still point to the initial commit; do not use it after the
 first merge into `develop`. It reuses an existing open PR.
+Every remote branch is checked: only seed-valued `main`/`develop` and an existing
+`feature/initial-macos` at a known ancestor of the local feature are accepted.
+An unrelated branch, an unknown/divergent feature commit or a non-empty remote
+without a seed base branch stops publication before any push or repository edit.
 
 ## Recommended protections
 

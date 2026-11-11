@@ -68,6 +68,8 @@ Deployed files:
 Changes inside the markers are replaced on the next apply, after backup.
 Content outside the markers is preserved. Symlinks in destinations or their
 parent directories are rejected, as are incomplete or duplicate markers.
+Each marker must occupy its entire line; adjacent text is rejected before installation
+or file changes. A closing marker at the end of a file needs no trailing newline.
 Custom `ZDOTDIR`, `XDG_CONFIG_HOME` and XDG-only Git layouts may require manual
 integration, depending on the module.
 

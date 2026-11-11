@@ -36,11 +36,15 @@ def marked_text(existing, body):
         if existing.count(BEGIN) != 1 or existing.count(END) != 1:
             raise ConfigError("Duplicate/incomplete managed markers; review the file manually.")
         start = existing.index(BEGIN)
-        finish = existing.index(END) + len(END)
-        if start >= finish or (start and existing[start - 1] != "\n"):
+        end_start = existing.index(END)
+        finish = end_start + len(END)
+        if start >= end_start:
             raise ConfigError("Invalid managed block boundaries.")
-        if finish < len(existing) and existing[finish] != "\n":
-            raise ConfigError("Invalid managed block suffix.")
+        for position, marker in ((start, BEGIN), (end_start, END)):
+            after = position + len(marker)
+            if ((position and existing[position - 1] != "\n")
+                    or (after < len(existing) and existing[after] != "\n")):
+                raise ConfigError("Managed markers must occupy complete lines.")
         return existing[:start] + block + existing[finish:]
     return existing + ("\n" if existing and not existing.endswith("\n") else "") + block + "\n"
 

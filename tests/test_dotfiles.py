@@ -22,7 +22,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "setup-scripts"))
 from lib.config import ConfigError, brewfile, load_for_configure, read_json, validate
-from lib.deployment import Deployment, atomic_write, marked_text
+from lib.deployment import BEGIN, END, Deployment, atomic_write, marked_text
 from lib.modules import desired_files, git_text
 from lib.system import installed_packages, preference_state, require_mac
 from lib.tui import toggle
@@ -181,6 +181,36 @@ class DeploymentTests(Sandbox):
                     "# <<< dotfiles-macos <<<\n# >>> dotfiles-macos >>>\n"):
             with self.subTest(old=old), self.assertRaises(ConfigError):
                 marked_text(old, "content")
+
+    def test_adjacent_marker_text_preserves_profile_and_prevents_install(self):
+        args = type("Args", (), {"plan": False, "json": False, "yes": True})()
+        target = self.home / ".zshrc"
+        for old in (
+            BEGIN + "export KEEP=1\nmanaged\n" + END + "\n",
+            BEGIN + "\nmanaged\nexport KEEP=1" + END + "\n",
+            "export KEEP=1" + BEGIN + "\nmanaged\n" + END + "\n",
+            BEGIN + "\nmanaged\n" + END + "export KEEP=1\n",
+            BEGIN + " \nmanaged\n" + END + "\n",
+            BEGIN + "\nmanaged\n " + END + "\n",
+        ):
+            with self.subTest(old=old):
+                target.write_text(old)
+                with patch.object(cli, "load", return_value=(self.config, self.catalog)), \
+                     patch.object(cli, "require_mac"), patch.object(cli, "homebrew") as brew:
+                    with self.assertRaises(ConfigError):
+                        cli.setup(args)
+                    brew.assert_not_called()
+                self.assertEqual(target.read_text(), old)
+                self.assertEqual(list(self.home.iterdir()), [target])
+
+    def test_complete_marker_lines_preserve_surrounding_content_and_eof(self):
+        prefix = "export KEEP_BEFORE=1\n"
+        for suffix in ("", "\n", "\nexport KEEP_AFTER=1\n"):
+            old = prefix + BEGIN + "\nold content\n" + END + suffix
+            expected = prefix + BEGIN + "\nnew content\n" + END + suffix
+            with self.subTest(suffix=suffix):
+                self.assertEqual(marked_text(old, "new content"), expected)
+                self.assertEqual(marked_text(expected, "new content"), expected)
 
     def test_git_escaping_round_trips_and_preserves_existing_settings(self):
         self.config["modules"] = ["git"]

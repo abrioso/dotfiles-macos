@@ -29,17 +29,26 @@ fi
 if ! gh repo view "$target" --json name >/dev/null 2>&1; then
     gh repo create "$target" --private --description 'Modular macOS dotfiles based on dotfiles-windows; Gitflow, Homebrew, Zsh and optional PowerShell.'
 fi
-# Existing repositories are accepted only when empty or at this exact seed.
+# Accept only seed base branches and a known ancestor of the local feature.
 remote_heads="$(git ls-remote --heads origin)"
+has_seed_branch=false
 while read -r remote_sha remote_ref; do
+    if [ -z "$remote_sha" ] && [ -z "$remote_ref" ]; then continue; fi
     case "$remote_ref" in
         refs/heads/main|refs/heads/develop)
             if [ "$remote_sha" != "$seed" ]; then
                 echo 'Remote main/develop already contain other work; stopping without overwrite.' >&2; exit 2
+            fi
+            has_seed_branch=true ;;
+        "refs/heads/$feature")
+            if ! git merge-base --is-ancestor "$remote_sha" "$feature"; then
+                echo 'Remote feature history is unknown or divergent; inspect it before publication.' >&2; exit 2
             fi ;;
+        *)
+            echo "Unexpected remote branch: $remote_ref; stopping before publication." >&2; exit 2 ;;
     esac
 done <<< "$remote_heads"
-if [ -n "$remote_heads" ] && ! printf '%s\n' "$remote_heads" | grep -Eq 'refs/heads/(main|develop)$'; then
+if [ -n "$remote_heads" ] && [ "$has_seed_branch" != true ]; then
     echo 'Repository has an unexpected history; inspect it before publication.' >&2; exit 2
 fi
 # One-time README-only initialization, before activating the local branch guard.
