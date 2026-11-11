@@ -1,0 +1,22 @@
+# Loaded by a managed block in ~/.zshrc; user content stays outside that block.
+[[ -o interactive ]] || return
+[[ -r "$HOME/.config/dotfiles-macos/zprofile" ]] && source "$HOME/.config/dotfiles-macos/zprofile"
+
+HISTFILE=${HISTFILE:-$HOME/.zsh_history}
+HISTSIZE=${HISTSIZE:-10000}
+SAVEHIST=${SAVEHIST:-10000}
+setopt HIST_IGNORE_DUPS HIST_IGNORE_SPACE
+alias ll='ls -lah'
+alias gs='git status'
+alias gl='git log --oneline --graph --decorate --all'
+alias ..='cd ..'
+
+if (( ! $+functions[compdef] )); then
+    autoload -Uz compinit
+    compinit
+fi
+
+if command -v oh-my-posh >/dev/null 2>&1; then
+    eval "$(oh-my-posh init zsh --config "$HOME/.config/dotfiles-macos/theme.omp.json")"
+fi
+# Source private settings explicitly from your own ~/.zshrc, outside the markers.

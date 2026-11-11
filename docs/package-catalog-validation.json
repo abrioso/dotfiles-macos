@@ -1,0 +1,245 @@
+{
+  "checked_on": "2026-11-11",
+  "source": "https://formulae.brew.sh/api/{type}/{token}.json",
+  "note": "Availability check only; not an installation or compatibility test.",
+  "packages": [
+    {
+      "type": "cask",
+      "requested": "docker-desktop",
+      "canonical": "docker-desktop",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "cask",
+      "requested": "firefox",
+      "canonical": "firefox",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "cask",
+      "requested": "font-caskaydia-cove-nerd-font",
+      "canonical": "font-caskaydia-cove-nerd-font",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "cask",
+      "requested": "google-chrome",
+      "canonical": "google-chrome",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "cask",
+      "requested": "google-drive",
+      "canonical": "google-drive",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "cask",
+      "requested": "iterm2",
+      "canonical": "iterm2",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "cask",
+      "requested": "microsoft-edge",
+      "canonical": "microsoft-edge",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "cask",
+      "requested": "microsoft-office",
+      "canonical": "microsoft-office",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "cask",
+      "requested": "microsoft-teams",
+      "canonical": "microsoft-teams",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "cask",
+      "requested": "obs",
+      "canonical": "obs",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "cask",
+      "requested": "onedrive",
+      "canonical": "onedrive",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "formula",
+      "requested": "powershell",
+      "canonical": "powershell",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "cask",
+      "requested": "rectangle",
+      "canonical": "rectangle",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "cask",
+      "requested": "tailscale-app",
+      "canonical": "tailscale-app",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "cask",
+      "requested": "the-unarchiver",
+      "canonical": "the-unarchiver",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "cask",
+      "requested": "visual-studio-code",
+      "canonical": "visual-studio-code",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "cask",
+      "requested": "vlc",
+      "canonical": "vlc",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "cask",
+      "requested": "windows-app",
+      "canonical": "windows-app",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "cask",
+      "requested": "yaak",
+      "canonical": "yaak",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "cask",
+      "requested": "yubico-authenticator",
+      "canonical": "yubico-authenticator",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "cask",
+      "requested": "azure-cli",
+      "canonical": "azure-cli",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "formula",
+      "requested": "colima",
+      "canonical": "colima",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "formula",
+      "requested": "curl",
+      "canonical": "curl",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "formula",
+      "requested": "docker",
+      "canonical": "docker",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "formula",
+      "requested": "docker-compose",
+      "canonical": "docker-compose",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "formula",
+      "requested": "gh",
+      "canonical": "gh",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "formula",
+      "requested": "git",
+      "canonical": "git",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "formula",
+      "requested": "jq",
+      "canonical": "jq",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "formula",
+      "requested": "oh-my-posh",
+      "canonical": "oh-my-posh",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "formula",
+      "requested": "python@3.13",
+      "canonical": "python@3.13",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "formula",
+      "requested": "rclone",
+      "canonical": "rclone",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "formula",
+      "requested": "ripgrep",
+      "canonical": "ripgrep",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "formula",
+      "requested": "wget",
+      "canonical": "wget",
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "type": "formula",
+      "requested": "ykman",
+      "canonical": "ykman",
+      "disabled": false,
+      "deprecated": false
+    }
+  ]
+}

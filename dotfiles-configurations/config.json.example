@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "package_groups": ["base", "terminal", "dev"],
+  "modules": ["shell", "git"],
+  "git": {
+    "user.name": "",
+    "user.email": "",
+    "core.autocrlf": "input",
+    "core.safecrlf": "warn",
+    "init.defaultBranch": "main",
+    "pull.ff": "only",
+    "push.default": "simple",
+    "alias.st": "status",
+    "alias.co": "checkout",
+    "alias.br": "branch",
+    "alias.ci": "commit",
+    "alias.df": "diff",
+    "alias.lg": "log --oneline --graph --decorate --all"
+  },
+  "macos": {
+    "show_file_extensions": true,
+    "show_path_bar": true,
+    "show_status_bar": true
+  }
+}

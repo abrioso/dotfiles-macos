@@ -1,0 +1,7 @@
+#!/bin/sh
+set -eu
+git diff --cached --check
+if git diff --cached --name-only --diff-filter=ACMR | grep -E '(^dotfiles-configurations/[^/]+\.json$|(^|/)\.env($|\.)|\.(pem|key)$)' >/dev/null; then
+    echo 'Local configuration or credential material must not be committed.' >&2
+    exit 1
+fi

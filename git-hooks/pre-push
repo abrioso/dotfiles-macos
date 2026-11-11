@@ -1,0 +1,9 @@
+#!/bin/sh
+# Repository-local Gitflow guard; server-side branch rules remain necessary.
+while read -r _ _ remote_ref _; do
+    case "$remote_ref" in
+        refs/heads/main|refs/heads/develop)
+            echo 'Direct pushes to main/develop are blocked. Open a pull request.' >&2
+            exit 1 ;;
+    esac
+done
