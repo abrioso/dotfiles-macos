@@ -1,5 +1,6 @@
 """Regression coverage for safety boundaries, preserved state and command failures."""
 import copy
+import errno
 import fcntl
 import hashlib
 import importlib.util
@@ -384,8 +385,22 @@ class CLITests(Sandbox):
                         output += os.read(master, 65536)
                 self.assertIn(b"dotfiles-macos |", output)
                 os.write(master, keys)
-                process.wait(timeout=5)
-                self.assertEqual(process.returncode, 0)
+                # Keep draining output while curses redraws and restores the terminal.
+                # Waiting without reading can fill the smaller macOS PTY buffer.
+                deadline = time.monotonic() + 5
+                while process.poll() is None and time.monotonic() < deadline:
+                    if select.select([master], [], [], 0.1)[0]:
+                        try:
+                            chunk = os.read(master, 65536)
+                        except OSError as exc:
+                            if exc.errno != errno.EIO:
+                                raise
+                            break  # Linux reports EIO when the slave closes.
+                        if not chunk:
+                            break  # macOS reports EOF instead.
+                        output += chunk
+                process.wait(timeout=max(0.1, deadline - time.monotonic()))
+                self.assertEqual(process.returncode, 0, output.decode(errors="replace"))
             finally:
                 if process.poll() is None:
                     process.kill()
@@ -400,12 +415,13 @@ class CLITests(Sandbox):
         self.assertNotIn("base", saved["package_groups"])
         self.assertIn("terminal", saved["package_groups"])
 
-    def test_update_fast_forwards_preserves_json_and_refuses_divergence(self):
-        def git(directory, *arguments):
-            value = subprocess.run(["git", "-C", str(directory), *arguments], capture_output=True, text=True)
-            self.assertEqual(value.returncode, 0, value.stderr)
-            return value.stdout.strip()
+    def git(self, directory, *arguments):
+        value = subprocess.run(["git", "-C", str(directory), *arguments], capture_output=True, text=True)
+        self.assertEqual(value.returncode, 0, value.stderr)
+        return value.stdout.strip()
 
+    def update_repositories(self):
+        git = self.git
         remote = self.base / "origin.git"
         remote.mkdir()
         git(remote, "init", "--bare")
@@ -423,6 +439,11 @@ class CLITests(Sandbox):
         git(self.base, "clone", "--branch", "feature/test", str(remote), str(writer))
         git(writer, "config", "user.name", "Test")
         git(writer, "config", "user.email", "test@example.invalid")
+        return writer, local, local_bytes
+
+    def test_update_fast_forwards_preserves_json_and_refuses_divergence(self):
+        git = self.git
+        writer, local, local_bytes = self.update_repositories()
         (writer / "new.txt").write_text("one")
         git(writer, "add", "new.txt")
         git(writer, "commit", "-m", "new upstream")
@@ -443,6 +464,28 @@ class CLITests(Sandbox):
         self.assertEqual(output.returncode, 2)
         self.assertEqual(git(self.checkout, "rev-parse", "HEAD"), before)
         self.assertEqual(local.read_bytes(), local_bytes)
+
+    def test_update_refuses_upstream_local_configuration_paths(self):
+        writer, _, _ = self.update_repositories()
+        before = self.git(self.checkout, "rev-parse", "HEAD")
+        local_paths = [self.checkout / "dotfiles-configurations" / name
+                       for name in ("config.json", "packages.json")]
+        contents = {path: path.read_bytes() for path in local_paths}
+        for name in ("config.json", "packages.json"):
+            with self.subTest(path=name):
+                self.git(writer, "reset", "--hard", before)
+                path = writer / "dotfiles-configurations" / name
+                path.write_text('{"upstream": true}\n')
+                self.git(writer, "add", "--force", str(path))
+                self.git(writer, "commit", "-m", "track reserved configuration")
+                self.git(writer, "push", "--force")
+                output = self.invoke("update")
+                self.assertEqual(output.returncode, 2, output.stderr)
+                self.assertIn("reserved local configuration", output.stderr)
+                self.assertEqual(self.git(self.checkout, "rev-parse", "HEAD"), before)
+                for local, data in contents.items():
+                    self.assertEqual(local.read_bytes(), data)
+                self.assertFalse((self.home / ".zshrc").exists())
 
     def test_non_macos_apply_refused(self):
         with patch.object(cli.platform, "system", return_value="Linux"):

@@ -130,6 +130,8 @@ health or equivalence between runtimes.
 
 `update` requires a clean working tree, an attached branch and an upstream on
 `origin`. It fetches and fast-forwards that branch; divergence causes failure.
+It refuses upstream trees that track reserved local `config.json` or
+`packages.json` paths, and disables Git's default overwrite of ignored files.
 It does not switch branches or reset local JSON. Review template differences
 manually and incorporate only what is needed. Package upgrades are separate,
 for example `brew outdated` followed by `brew upgrade <package>` after review.

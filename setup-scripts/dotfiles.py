@@ -173,7 +173,12 @@ def update(_args):
     if remote != "origin" or not merge_ref.startswith("refs/heads/"):
         raise ConfigError("A branch upstream on origin is required; configure it explicitly.")
     git("fetch", "--no-tags", "origin", merge_ref)
-    git("merge", "--ff-only", "FETCH_HEAD")
+    protected = ("dotfiles-configurations/config.json", "dotfiles-configurations/packages.json")
+    tracked = git("ls-tree", "-r", "--name-only", "-z", "FETCH_HEAD").split("\0")
+    if any(path == local or path.startswith(local + "/") or local.startswith(path + "/")
+           for path in tracked if path for local in protected):
+        raise ConfigError("Upstream tracks a reserved local configuration path; update refused.")
+    git("merge", "--ff-only", "--no-overwrite-ignore", "FETCH_HEAD")
     print("Repository updated. Local configuration preserved. Setup was not run.")
     return 0
 
