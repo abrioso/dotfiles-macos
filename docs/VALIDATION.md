@@ -21,10 +21,20 @@ do utilizador, iniciou runtimes ou instalou os pacotes do catálogo.
   `7986efac25016e41eed7e471666140c06f9d97cf`; SHA-256 confirmado como
   `5f333bbe53bc490e51e7ccb1df8779b3dd6ee73a1a7379efda216edb08ccb148`.
 
+## Publicação
+
+- Repositório privado criado pelo proprietário e publicação concluída em 11/11/2026.
+- `main` e `develop` inicializadas apenas com o README; implementação submetida no
+  [PR #1](https://github.com/abrioso/dotfiles-macos/pull/1), de `feature/initial-macos`
+  para `develop`, sem merge ou release.
+- A árvore Git da implementação publicada coincide com a validada localmente:
+  `ab24553bc6f6006b9c52ff27c2d29e927a1fe44a`. Esta nota e o README foram atualizados
+  posteriormente para registar a publicação.
+- A matriz CI foi acionada. Consultar os checks do PR para o resultado atual.
+
 ## Pendente
 
-- Publicação em GitHub e execução da matriz CI; o conector usado nesta preparação
-  não oferece criação de repositórios e não havia sessão web/CLI autenticada.
+- Conclusão da matriz CI no GitHub.
 - Validação real em macOS Apple Silicon/Intel e PowerShell; a CI inclui parsing
   PowerShell, mas o executável não estava disponível no ambiente local.
 - Aceitação no Mac, incluindo fonte, perfis gráficos, aplicações, permissões,

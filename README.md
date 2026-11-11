@@ -7,8 +7,9 @@ Usa Homebrew, Zsh e, opcionalmente, PowerShell com o mesmo tema Oh My Posh.
 
 **Estado:** implementação inicial em `feature/initial-macos`, destinada a PR para
 `develop`. `main` contém apenas o ponto inicial do repositório. Ainda não existe
-uma release aceite num Mac físico. A publicação remota e execução da CI devem
-ser confirmadas separadamente; ver [publicação](docs/GITFLOW.md).
+uma release aceite num Mac físico. A implementação está publicada no
+[PR #1 para develop](https://github.com/abrioso/dotfiles-macos/pull/1).
+Consultar os checks desse PR antes de integrar; ver [Gitflow](docs/GITFLOW.md).
 
 ## Começar
 
