@@ -1,12 +1,13 @@
 # Initial validation evidence
 
-Date: 2026-11-11. Local execution environment: Linux, Python 3.12.14,
+Updated: 2026-11-12. Local execution environment: Linux, Python 3.12.14,
 the environment's Zsh and ShellCheck 0.11.0. No test applied settings to the
 user's Mac, started runtimes or installed packages from the catalog.
 
 ## Completed
 
-- **36 automated tests passed**, including a real pseudo-terminal TUI,
+- **48 automated tests collected**: 47 pass locally on Linux; one native macOS
+  preference test runs only on the macOS CI runners. Coverage includes a real pseudo-terminal TUI,
   cancellation without writes, saved toggles, strict validation, opt-outs,
   read-only plans/diagnostics without identity disclosure, independent copies,
   idempotency, backups, publication failures, symlinks/hardlinks, Git integration,
@@ -18,6 +19,13 @@ user's Mac, started runtimes or installed packages from the catalog.
 - Update regressions reject upstream commits that track either reserved local
   JSON file, preserving both files and HEAD. The PTY test drains output until
   process exit to avoid blocking curses redraws on macOS terminal buffers.
+- Bootstrap failure tests run a copy with redirected external commands and an
+  isolated Homebrew prefix. Failed downloads, checksum mismatches and checksum
+  command failures never execute the installer. A simulated verified installer
+  failure stops bootstrap; temporary downloads are removed and existing home
+  files remain unchanged. No real downloads or installations occur in these tests.
+- Configuration regressions reject regular/dangling/FIFO symlinks and direct
+  FIFOs before reads in configure, plan and verify, with bounded process timeouts.
 - Python syntax analysis using the 3.9 grammar; valid template and theme JSON.
 - Bash/POSIX shell and Zsh syntax, ShellCheck without findings and Git whitespace checks.
 - **34 unique catalog tokens confirmed** through the official Homebrew API, with

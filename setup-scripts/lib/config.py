@@ -31,6 +31,8 @@ def object_pairs(pairs):
 
 
 def read_json(path):
+    from .deployment import assert_safe
+    assert_safe(path)
     try:
         return json.loads(Path(path).read_text(encoding="utf-8"), object_pairs_hook=object_pairs)
     except (OSError, UnicodeError, ValueError) as exc:
@@ -89,16 +91,22 @@ def validate(config, catalog):
 
 
 def load(root):
+    from .deployment import assert_safe
     directory = Path(root) / "dotfiles-configurations"
     paths = [directory / name for name in ("config.json", "packages.json")]
+    for path in paths:
+        assert_safe(path)
     if any(not p.is_file() for p in paths):
         raise ConfigError("Local configuration is missing. Run ./setup-scripts/configure.sh first.")
     return validate(*(read_json(path) for path in paths))
 
 
 def load_for_configure(root):
+    from .deployment import assert_safe
     directory = Path(root) / "dotfiles-configurations"
     paths = [directory / name for name in ("config.json", "packages.json")]
+    for path in paths:
+        assert_safe(path)
     return validate(*(read_json(p if p.exists() else Path(str(p) + ".example")) for p in paths))
 
 

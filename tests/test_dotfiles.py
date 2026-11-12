@@ -425,6 +425,33 @@ class CLITests(Sandbox):
         return {str(p.relative_to(self.base)): hashlib.sha256(p.read_bytes()).hexdigest()
                 for p in self.base.rglob("*") if p.is_file()}
 
+    def test_unsafe_configuration_paths_fail_before_reading(self):
+        directory = self.checkout / "dotfiles-configurations"
+        regular = self.base / "target.json"
+        regular.write_text('{"preserve": true}')
+        fifo = self.base / "pipe"
+        os.mkfifo(fifo)
+        for name in ("config.json", "packages.json"):
+            for kind, target in (("regular-link", regular), ("fifo-link", fifo),
+                                 ("dangling-link", self.base / "absent"), ("fifo", None)):
+                with self.subTest(name=name, kind=kind):
+                    path = directory / name
+                    if target is None:
+                        os.mkfifo(path)
+                    else:
+                        path.symlink_to(target)
+                    try:
+                        for args in (("configure", "--defaults"), ("setup", "--plan"), ("verify",)):
+                            output = subprocess.run(
+                                [sys.executable, "-B", str(self.checkout / "setup-scripts/dotfiles.py"), *args],
+                                env=os.environ.copy(), text=True, capture_output=True, timeout=5)
+                            self.assertEqual(output.returncode, 2, output.stderr)
+                            self.assertRegex(output.stderr, "Symlink destination|not a regular file")
+                        self.assertEqual(regular.read_text(), '{"preserve": true}')
+                        self.assertEqual(list(self.home.iterdir()), [])
+                    finally:
+                        path.unlink()
+
     def test_missing_config_plan_is_read_only(self):
         before = self.snapshot()
         output = self.invoke("setup", "--plan")
