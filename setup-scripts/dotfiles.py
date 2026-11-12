@@ -137,8 +137,9 @@ def setup(args):
                         raise ConfigError("Package installation did not satisfy the selection; dotfiles not applied.")
         # Installers, editors or sync tools may have changed profiles during Homebrew.
         # Rebuild all merged files and reject conflicts before writing any of them.
-        progress("Revalidating profiles and backup paths after package installation")
+        progress("Revalidating profiles, preferences and backup paths after package installation")
         files = desired_files(ROOT, Path.home(), config)
+        pending = prepare_preferences(config)
         deploy.preflight()
         progress("Applying " + str(len(files)) + " managed files")
         for path, text in files.items():

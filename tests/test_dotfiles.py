@@ -449,6 +449,56 @@ class CommandTests(Sandbox):
         self.assertEqual(profile.read_text(), conflict)
         self.assertEqual(list(self.home.iterdir()), [profile])
 
+    def test_preferences_changed_during_install_converge_with_fresh_backup(self):
+        from lib.config import PREFERENCES
+        self.config["modules"] = ["macos"]
+        states = {PREFERENCES[name]: {"exists": True, "value": desired}
+                  for name, desired in self.config["macos"].items()}
+        changed = next(iter(PREFERENCES))
+        domain, key = PREFERENCES[changed]
+        desired = self.config["macos"][changed]
+        writes = []
+        args = type("Args", (), {"plan": False, "json": False, "yes": True})()
+
+        def installer(*args, **kwargs):
+            states[(domain, key)] = {"exists": True, "value": not desired}
+            return result()
+
+        def write_preference(command):
+            backups = list(self.home.rglob("macos-preferences.json"))
+            self.assertEqual(len(backups), 1)
+            saved = json.loads(backups[0].read_text())
+            self.assertEqual(saved[0]["previous"], {"exists": True, "value": not desired})
+            writes.append(command)
+            states[(command[2], command[3])] = {"exists": True, "value": command[-1] == "true"}
+            return result()
+
+        with patch.object(cli, "load", return_value=(self.config, self.catalog)), \
+             patch.object(cli, "require_mac"), patch.object(cli, "homebrew", return_value="test-brew"), \
+             patch.object(cli, "installed_packages", return_value=cli.packages(self.config, self.catalog)), \
+             patch.object(cli.subprocess, "run", side_effect=installer), \
+             patch("lib.modules.preference_state", side_effect=lambda d, k: dict(states[(d, k)])), \
+             patch("lib.modules.run", side_effect=write_preference), \
+             patch("sys.stdout", new_callable=io.StringIO):
+            self.assertEqual(cli.setup(args), 0)
+        self.assertEqual(len(writes), 1)
+        for name, value in self.config["macos"].items():
+            self.assertEqual(states[PREFERENCES[name]], {"exists": True, "value": value})
+
+    def test_preference_recheck_failure_prevents_managed_writes(self):
+        self.config["modules"] = ["shell", "macos"]
+        args = type("Args", (), {"plan": False, "json": False, "yes": True})()
+        with patch.object(cli, "load", return_value=(self.config, self.catalog)), \
+             patch.object(cli, "require_mac"), patch.object(cli, "homebrew", return_value="test-brew"), \
+             patch.object(cli, "installed_packages", return_value=cli.packages(self.config, self.catalog)), \
+             patch.object(cli.subprocess, "run", return_value=result()), \
+             patch.object(cli, "prepare_preferences", side_effect=[[], ConfigError("Preference changed type")]), \
+             patch.object(cli, "apply_preferences") as apply:
+            with self.assertRaisesRegex(ConfigError, "changed type"):
+                cli.setup(args)
+            apply.assert_not_called()
+        self.assertEqual(list(self.home.iterdir()), [])
+
     def test_failed_package_install_never_changes_dotfiles(self):
         self.config["git"].update({"user.name": "Test", "user.email": "test@example.invalid"})
         args = type("Args", (), {"plan": False, "json": False, "yes": True})()
