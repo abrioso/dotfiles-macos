@@ -6,7 +6,7 @@ user's Mac, started runtimes or installed packages from the catalog.
 
 ## Completed
 
-- **53 automated tests collected**: 52 pass locally on Linux; one native macOS
+- **54 automated tests collected**: 53 pass locally on Linux; one native macOS
   preference test runs only on the macOS CI runners. Coverage includes a real pseudo-terminal TUI,
   cancellation without writes, saved toggles, strict validation, opt-outs,
   read-only plans/diagnostics without identity disclosure, independent copies,
@@ -31,6 +31,9 @@ user's Mac, started runtimes or installed packages from the catalog.
   before writing managed files. Invalid backup ancestors stop setup before Homebrew.
 - Preference regressions simulate drift during Homebrew, verify convergence and
   backups of the post-install state, and abort before managed writes on query failure.
+- Destination-parent regressions cover regular files and FIFOs at three managed
+  profile ancestors, confirming refusal before Homebrew with original content and
+  file metadata preserved.
 - Python syntax analysis using the 3.9 grammar; valid template and theme JSON.
 - Bash/POSIX shell and Zsh syntax, ShellCheck without findings and Git whitespace checks.
 - **34 unique catalog tokens confirmed** through the official Homebrew API, with

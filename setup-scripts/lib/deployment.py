@@ -15,9 +15,12 @@ END = "# <<< dotfiles-macos <<<"
 
 def assert_safe(path):
     path = Path(path)
-    for candidate in (path,) + tuple(path.parents):
+    # Check ancestors from the root so invalid parents fail before probing children.
+    for candidate in tuple(reversed(path.parents)) + (path,):
         if candidate.is_symlink():
             raise ConfigError("Symlink destination refused: " + str(candidate))
+        if candidate != path and candidate.exists() and not candidate.is_dir():
+            raise ConfigError("Destination parent is not a directory: " + str(candidate))
     if path.exists() and not path.is_file():
         raise ConfigError("Destination is not a regular file: " + str(path))
 

@@ -377,6 +377,40 @@ class CommandTests(Sandbox):
             brew.assert_not_called()
         self.assertEqual(list(self.home.iterdir()), [])
 
+    def test_non_directory_profile_parents_prevent_package_installation(self):
+        self.config["modules"] = ["shell", "pwsh"]
+        self.config["package_groups"] = ["pwsh"]
+        args = type("Args", (), {"plan": False, "json": False, "yes": True})()
+        for name in (".config", ".config/dotfiles-macos", ".config/powershell"):
+            for kind in ("file", "fifo"):
+                with self.subTest(name=name, kind=kind):
+                    path = self.home / name
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    if kind == "file":
+                        path.write_text("preserve existing content")
+                    else:
+                        os.mkfifo(path)
+                    before = path.lstat()
+                    try:
+                        with patch.object(cli, "load", return_value=(self.config, self.catalog)), \
+                             patch.object(cli, "require_mac"), patch.object(cli, "homebrew") as brew, \
+                             patch.object(cli.subprocess, "run") as install:
+                            with self.assertRaisesRegex(ConfigError, "parent is not a directory"):
+                                cli.setup(args)
+                            brew.assert_not_called()
+                            install.assert_not_called()
+                        self.assertEqual(path.lstat().st_ino, before.st_ino)
+                        self.assertEqual(path.lstat().st_mode, before.st_mode)
+                        if kind == "file":
+                            self.assertEqual(path.read_text(), "preserve existing content")
+                        self.assertFalse((self.home / ".zshrc").exists())
+                        self.assertFalse((self.home / ".local").exists())
+                    finally:
+                        if (self.home / ".config").is_dir():
+                            shutil.rmtree(self.home / ".config")
+                        else:
+                            (self.home / ".config").unlink()
+
     def test_backup_conflicts_prevent_package_installation(self):
         self.config["git"].update({"user.name": "Test", "user.email": "test@example.invalid"})
         args = type("Args", (), {"plan": False, "json": False, "yes": True})()
