@@ -8,6 +8,8 @@ import io
 import json
 import os
 import pty
+import plistlib
+import platform
 import select
 import shutil
 import struct
@@ -277,12 +279,48 @@ class CommandTests(Sandbox):
             with self.assertRaisesRegex(ConfigError, "sudo"):
                 require_mac()
 
-    def test_defaults_distinguishes_missing_and_failure(self):
-        with patch("lib.system.run", return_value=result(1, stderr="The domain/default pair does not exist")):
-            self.assertEqual(preference_state("domain", "key"), {"exists": False})
-        with patch("lib.system.run", return_value=result(1, stderr="unexpected failure")):
-            with self.assertRaises(ConfigError):
-                preference_state("domain", "key")
+    def test_defaults_reads_typed_preferences_and_missing_keys(self):
+        for data, expected in (({}, {"exists": False}),
+                               ({"key": True}, {"exists": True, "value": True}),
+                               ({"key": False}, {"exists": True, "value": False})):
+            with self.subTest(data=data), patch("lib.system.run", return_value=result(
+                    stdout=plistlib.dumps(data).decode())) as command:
+                self.assertEqual(preference_state("domain", "key"), expected)
+                command.assert_called_once_with(["/usr/bin/defaults", "export", "domain", "-"])
+
+    def test_defaults_rejects_errors_invalid_plists_and_non_booleans(self):
+        for response in (result(1, stderr="Permission denied"), result(1, stdout="Usage: defaults"),
+                         result(stdout="not a plist"),
+                         result(stdout=plistlib.dumps([]).decode()),
+                         *(result(stdout=plistlib.dumps({"key": value}).decode())
+                           for value in (0, 1, "true", "false"))):
+            with self.subTest(response=response), patch("lib.system.run", return_value=response):
+                with self.assertRaisesRegex(ConfigError, "domain/key"):
+                    preference_state("domain", "key")
+
+    @unittest.skipUnless(platform.system() == "Darwin", "Requires macOS defaults")
+    def test_native_defaults_reads_temporary_plist_without_changing_preferences(self):
+        # Absolute plist domains exercise the real utility without writing user defaults.
+        domain = self.base / "preferences.plist"
+        for data, expected in (({}, {"exists": False}),
+                               ({"key": True}, {"exists": True, "value": True}),
+                               ({"key": False}, {"exists": True, "value": False})):
+            with self.subTest(data=data):
+                domain.write_bytes(plistlib.dumps(data))
+                before = domain.read_bytes()
+                self.assertEqual(preference_state(str(domain), "key"), expected)
+                self.assertEqual(domain.read_bytes(), before)
+
+    def test_preference_read_failure_prevents_install_and_deployment(self):
+        self.config["modules"] = ["macos"]
+        args = type("Args", (), {"plan": False, "json": False, "yes": True})()
+        with patch.object(cli, "load", return_value=(self.config, self.catalog)), \
+             patch.object(cli, "require_mac"), patch.object(cli, "homebrew") as brew, \
+             patch("lib.system.run", return_value=result(1, stderr="Permission denied")):
+            with self.assertRaisesRegex(ConfigError, "Permission denied"):
+                cli.setup(args)
+            brew.assert_not_called()
+        self.assertEqual(list(self.home.iterdir()), [])
 
     def test_failed_package_install_never_changes_dotfiles(self):
         args = type("Args", (), {"plan": False, "json": False, "yes": True})()

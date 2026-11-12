@@ -1,6 +1,7 @@
 """Bounded external commands and native Homebrew selection."""
 import os
 import platform
+import plistlib
 import subprocess
 from pathlib import Path
 
@@ -54,15 +55,22 @@ def installed_packages(brew):
 
 
 def preference_state(domain, key):
-    query = run(["/usr/bin/defaults", "read", domain, key])
+    # Export a typed plist instead of parsing localized read/read-type messages.
+    query = run(["/usr/bin/defaults", "export", domain, "-"])
+    label = domain + "/" + key
     if query.returncode:
-        # A missing key is distinguished from a defaults execution failure.
-        if "does not exist" in query.stderr:
-            return {"exists": False}
-        raise ConfigError("Unable to query a macOS preference.")
-    kind = run(["/usr/bin/defaults", "read-type", domain, key])
-    if kind.returncode or "boolean" not in kind.stdout.lower():
-        raise ConfigError("Existing preference is not a boolean; inspect it manually.")
-    if query.stdout.strip().lower() not in ("0", "1", "true", "false"):
-        raise ConfigError("Unexpected boolean preference value.")
-    return {"exists": True, "value": query.stdout.strip().lower() in ("1", "true")}
+        detail = (query.stderr.strip() or query.stdout.strip() or "No diagnostic output")[:1000]
+        raise ConfigError("Unable to query macOS preference " + label
+                          + " (exit " + str(query.returncode) + "): " + detail)
+    try:
+        preferences = plistlib.loads(query.stdout.encode("utf-8"))
+    except (ValueError, plistlib.InvalidFileException) as exc:
+        raise ConfigError("Invalid preference plist for " + label) from exc
+    if not isinstance(preferences, dict):
+        raise ConfigError("Expected a preference dictionary for " + label)
+    if key not in preferences:
+        return {"exists": False}
+    value = preferences[key]
+    if type(value) is not bool:
+        raise ConfigError("Existing preference " + label + " is not a boolean; inspect it manually.")
+    return {"exists": True, "value": value}

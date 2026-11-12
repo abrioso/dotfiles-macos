@@ -18,11 +18,13 @@ without Rosetta. Git/Apple Command Line Tools, Homebrew and Python 3.9+ are
 required. Bootstrap guides prerequisite setup and installs Homebrew only with
 an explicit option. Intel may have additional package availability/support limits.
 
-If you received the delivery archive, extract it and enter `dotfiles-macos`.
+Keep Git repositories in `~/workspace`. If you received the delivery archive,
+extract it there and enter `~/workspace/dotfiles-macos`.
 To evaluate the published initial implementation:
 
 ```sh
 xcode-select --install  # Only if Command Line Tools are missing.
+mkdir -p ~/workspace && cd ~/workspace
 git clone --branch feature/initial-macos https://github.com/abrioso/dotfiles-macos.git
 cd dotfiles-macos
 ./setup-scripts/bootstrap.sh
