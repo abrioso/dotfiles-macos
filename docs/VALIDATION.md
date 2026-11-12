@@ -6,7 +6,7 @@ user's Mac, started runtimes or installed packages from the catalog.
 
 ## Completed
 
-- **48 automated tests collected**: 47 pass locally on Linux; one native macOS
+- **51 automated tests collected**: 50 pass locally on Linux; one native macOS
   preference test runs only on the macOS CI runners. Coverage includes a real pseudo-terminal TUI,
   cancellation without writes, saved toggles, strict validation, opt-outs,
   read-only plans/diagnostics without identity disclosure, independent copies,
@@ -26,6 +26,9 @@ user's Mac, started runtimes or installed packages from the catalog.
   files remain unchanged. No real downloads or installations occur in these tests.
 - Configuration regressions reject regular/dangling/FIFO symlinks and direct
   FIFOs before reads in configure, plan and verify, with bounded process timeouts.
+- Deployment regressions simulate edits to all four user profiles during package
+  installation, preserve new unmanaged content, and reject new marker conflicts
+  before writing managed files. Invalid backup ancestors stop setup before Homebrew.
 - Python syntax analysis using the 3.9 grammar; valid template and theme JSON.
 - Bash/POSIX shell and Zsh syntax, ShellCheck without findings and Git whitespace checks.
 - **34 unique catalog tokens confirmed** through the official Homebrew API, with

@@ -377,6 +377,78 @@ class CommandTests(Sandbox):
             brew.assert_not_called()
         self.assertEqual(list(self.home.iterdir()), [])
 
+    def test_backup_conflicts_prevent_package_installation(self):
+        self.config["git"].update({"user.name": "Test", "user.email": "test@example.invalid"})
+        args = type("Args", (), {"plan": False, "json": False, "yes": True})()
+        for name in (".local", ".local/state", ".local/state/dotfiles-macos/backups"):
+            for kind in ("symlink", "file"):
+                with self.subTest(name=name, kind=kind):
+                    path = self.home / name
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    if kind == "symlink":
+                        path.symlink_to(self.base / "absent")
+                    else:
+                        path.write_text("preserve")
+                    try:
+                        with patch.object(cli, "load", return_value=(self.config, self.catalog)), \
+                             patch.object(cli, "require_mac"), patch.object(cli, "homebrew") as brew:
+                            with self.assertRaisesRegex(ConfigError, "backup|Backup"):
+                                cli.setup(args)
+                            brew.assert_not_called()
+                        self.assertFalse((self.home / ".zshrc").exists())
+                        if kind == "file":
+                            self.assertEqual(path.read_text(), "preserve")
+                    finally:
+                        shutil.rmtree(self.home / ".local") if (self.home / ".local").is_dir() else (self.home / ".local").unlink()
+
+    def test_profile_edits_during_install_are_preserved(self):
+        self.config["modules"] = ["shell", "git", "pwsh"]
+        self.config["package_groups"] = ["pwsh"]
+        self.config["git"].update({"user.name": "Test", "user.email": "test@example.invalid"})
+        profiles = {self.home / ".zshrc": "export KEEP_ZSHRC=1\n",
+                    self.home / ".zprofile": "export KEEP_ZPROFILE=1\n",
+                    self.home / ".gitconfig": "[custom]\n    keep = yes\n",
+                    self.home / ".config/powershell/profile.ps1": "$KeepProfile = 1\n"}
+        args = type("Args", (), {"plan": False, "json": False, "yes": True})()
+        real_run = subprocess.run
+
+        def installer(command, **kwargs):
+            if command[0] != "test-brew":
+                return real_run(command, **kwargs)
+            for path, content in profiles.items():
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(content)
+            return result()
+
+        with patch.object(cli, "load", return_value=(self.config, self.catalog)), \
+             patch.object(cli, "require_mac"), patch.object(cli, "homebrew", return_value="test-brew"), \
+             patch.object(cli, "installed_packages", return_value=cli.packages(self.config, self.catalog)), \
+             patch.object(cli.subprocess, "run", side_effect=installer), \
+             patch("sys.stdout", new_callable=io.StringIO):
+            self.assertEqual(cli.setup(args), 0)
+        for path, content in profiles.items():
+            self.assertIn(content, path.read_text())
+            self.assertIn(BEGIN, path.read_text())
+
+    def test_profile_conflict_during_install_aborts_before_deployment(self):
+        self.config["modules"] = ["shell"]
+        args = type("Args", (), {"plan": False, "json": False, "yes": True})()
+        profile = self.home / ".zshrc"
+        conflict = BEGIN + " invalid marker\n"
+
+        def installer(*args, **kwargs):
+            profile.write_text(conflict)
+            return result()
+
+        with patch.object(cli, "load", return_value=(self.config, self.catalog)), \
+             patch.object(cli, "require_mac"), patch.object(cli, "homebrew", return_value="test-brew"), \
+             patch.object(cli, "installed_packages", return_value=cli.packages(self.config, self.catalog)), \
+             patch.object(cli.subprocess, "run", side_effect=installer):
+            with self.assertRaises(ConfigError):
+                cli.setup(args)
+        self.assertEqual(profile.read_text(), conflict)
+        self.assertEqual(list(self.home.iterdir()), [profile])
+
     def test_failed_package_install_never_changes_dotfiles(self):
         self.config["git"].update({"user.name": "Test", "user.email": "test@example.invalid"})
         args = type("Args", (), {"plan": False, "json": False, "yes": True})()

@@ -76,8 +76,18 @@ class Deployment:
         atomic_write(self.backup_dir / "manifest.json",
                      json.dumps(self.entries, indent=2).encode() + b"\n")
 
+    def preflight(self):
+        """Validate existing backup ancestors without creating any directories."""
+        destination = self.home / ".local/state/dotfiles-macos/backups"
+        for path in (destination,) + tuple(destination.parents):
+            if path.is_symlink():
+                raise ConfigError("Symlink backup directory refused: " + str(path))
+            if path.exists() and not path.is_dir():
+                raise ConfigError("Backup path is not a directory: " + str(path))
+
     def _start(self):
         if self.backup_dir is None:
+            self.preflight()
             stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid4().hex[:8]
             self.backup_dir = self.home / ".local/state/dotfiles-macos/backups" / stamp
             assert_safe(self.backup_dir / "manifest.json")

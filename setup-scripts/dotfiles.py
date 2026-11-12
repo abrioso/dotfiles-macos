@@ -114,6 +114,7 @@ def setup(args):
     text = brewfile(config, catalog)
     deploy = Deployment(Path.home())
     try:
+        deploy.preflight()
         if identity_changed:
             deploy.write(config_path, json.dumps(config, ensure_ascii=False, indent=2) + "\n")
             print("Git identity saved to dotfiles-configurations/config.json.")
@@ -134,6 +135,11 @@ def setup(args):
                 for kind, tokens in packages(config, catalog).items():
                     if not set(tokens).issubset(installed[kind]):
                         raise ConfigError("Package installation did not satisfy the selection; dotfiles not applied.")
+        # Installers, editors or sync tools may have changed profiles during Homebrew.
+        # Rebuild all merged files and reject conflicts before writing any of them.
+        progress("Revalidating profiles and backup paths after package installation")
+        files = desired_files(ROOT, Path.home(), config)
+        deploy.preflight()
         progress("Applying " + str(len(files)) + " managed files")
         for path, text in files.items():
             changed = deploy.write(path, text)
