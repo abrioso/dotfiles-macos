@@ -6,13 +6,18 @@ import subprocess
 from pathlib import Path
 
 from .config import ConfigError
+from .diagnostics import progress
 
 
 def run(args, timeout=60):
+    label = Path(str(args[0])).name
+    progress("Running " + label + " (timeout " + str(timeout) + "s)")
     environment = dict(os.environ, HOMEBREW_NO_AUTO_UPDATE="1", HOMEBREW_NO_ANALYTICS="1", LC_ALL="C")
     try:
-        return subprocess.run([str(x) for x in args], text=True, capture_output=True,
-                              timeout=timeout, env=environment, check=False)
+        result = subprocess.run([str(x) for x in args], text=True, capture_output=True,
+                                timeout=timeout, env=environment, check=False)
+        progress(label + " exited with status " + str(result.returncode))
+        return result
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise ConfigError("Command unavailable or timed out: " + str(args[0])) from exc
 

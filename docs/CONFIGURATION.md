@@ -13,8 +13,9 @@
    the environment of its parent terminal.
 6. Run `./setup-scripts/configure.sh`. Arrows move, Space toggles, S saves and
    Q/Esc cancels without writing files. The window must be at least 35 by 8.
-7. Edit `dotfiles-configurations/config.json` to set `user.name` and `user.email`.
-   Empty fields preserve the existing Git identity.
+7. Optionally set `user.name` and `user.email` in `dotfiles-configurations/config.json`.
+   When the Git module is enabled, setup fills empty fields from global Git settings
+   or asks for missing values. Saved JSON values take precedence.
 8. Review `./setup-scripts/setup.sh --plan`, then apply with `./setup-scripts/setup.sh`.
 9. Open a new terminal and run `./setup-scripts/verify.sh --check-packages`.
 
@@ -23,6 +24,7 @@ To create configuration without the TUI:
 ```sh
 ./setup-scripts/configure.sh --defaults
 ./setup-scripts/setup.sh --plan --json
+# Set Git identity in the local JSON first if no global identity exists.
 ./setup-scripts/setup.sh --yes
 ```
 
@@ -32,6 +34,15 @@ but does not suppress prompts from Homebrew, macOS, installers or application
 licenses. Do not run setup with sudo. If Python was installed through Homebrew,
 a new terminal may need the PATH printed by bootstrap before Zsh configuration
 has been applied.
+
+Use `--verbose` or `-v` with configure, setup, verify or update for progress and
+external command exit statuses on stderr. JSON output remains on stdout.
+Captured command output and identity values are not printed by verbose logging.
+`setup --plan` remains read-only and never queries or prompts for Git identity.
+With `--yes` or no terminal, missing identity causes an error before installation.
+New identity values are backed up and saved to the local JSON after preflight;
+if package installation subsequently fails, those saved choices remain for retry.
+The identity is applied through the managed global Git include when deployment runs.
 
 ## File model
 

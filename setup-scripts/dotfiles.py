@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """macOS dotfiles CLI. No third-party Python dependencies."""
 import argparse
+import copy
 import json
 import os
 import platform
@@ -10,7 +11,9 @@ import tempfile
 from pathlib import Path
 
 sys.dont_write_bytecode = True  # Plan/verify must not create Python cache files.
-from lib.config import ConfigError, PREFERENCES, brewfile, load, load_for_configure, packages
+from lib.config import ConfigError, PREFERENCES, brewfile, load, load_for_configure, packages, validate
+from lib import diagnostics
+from lib.diagnostics import progress
 from lib.deployment import Deployment, assert_safe
 from lib.modules import apply_preferences, desired_files, display_plan, prepare_preferences
 from lib.system import homebrew, installed_packages, preference_state, require_mac, run
@@ -19,6 +22,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def configure(args):
+    progress("Loading configuration for editing")
     config, catalog = load_for_configure(ROOT)
     if not args.defaults:
         if not sys.stdin.isatty() or not sys.stdout.isatty():
@@ -47,7 +51,38 @@ def configure(args):
     return 0
 
 
+def complete_git_identity(config, catalog, interactive):
+    """Fill missing local identity from global Git settings or explicit input."""
+    draft = copy.deepcopy(config)
+    if "git" not in draft["modules"]:
+        return draft
+    for key in ("user.name", "user.email"):
+        if draft["git"].get(key, "").strip():
+            continue
+        existing = run(["git", "config", "--global", "--includes", "--get", key])
+        if existing.returncode not in (0, 1):
+            raise ConfigError("Unable to read global Git " + key + "; no changes applied.")
+        value = existing.stdout.strip() if existing.returncode == 0 else ""
+        if value:
+            progress("Using existing global Git " + key)
+        elif not interactive:
+            raise ConfigError("Missing Git " + key + ". Set it in dotfiles-configurations/config.json "
+                              "or run setup interactively without --yes.")
+        else:
+            while not value or any(ord(c) < 32 for c in value):
+                try:
+                    value = input("Enter Git " + key + " (Ctrl-C cancels): ").strip()
+                except EOFError as exc:
+                    raise ConfigError("Git identity input ended; no changes applied.") from exc
+                if not value or any(ord(c) < 32 for c in value):
+                    print("Enter a non-empty, single-line value.")
+        draft["git"][key] = value
+    validate(draft, catalog)
+    return draft
+
+
 def setup(args):
+    progress("Loading local configuration")
     config, catalog = load(ROOT)
     if args.plan:
         plan = display_plan(config, catalog)
@@ -65,13 +100,25 @@ def setup(args):
         if not sys.stdin.isatty() or input("Apply this local configuration? [y/N] ").lower() != "y":
             print("Cancelled; no changes applied.")
             return 0
+    progress("Checking destination files and macOS preferences")
     # Resolve every file and preference conflict before requesting installation.
     files = desired_files(ROOT, Path.home(), config)
     pending = prepare_preferences(config)
+    completed = complete_git_identity(config, catalog, not args.yes and sys.stdin.isatty())
+    identity_changed = completed != config
+    config = completed
+    files = desired_files(ROOT, Path.home(), config)
+    config_path = ROOT / "dotfiles-configurations/config.json"
+    if identity_changed:
+        assert_safe(config_path)
     text = brewfile(config, catalog)
     deploy = Deployment(Path.home())
     try:
+        if identity_changed:
+            deploy.write(config_path, json.dumps(config, ensure_ascii=False, indent=2) + "\n")
+            print("Git identity saved to dotfiles-configurations/config.json.")
         if text:
+            progress("Installing missing Homebrew packages; package output follows")
             brew = homebrew()
             with tempfile.TemporaryDirectory(prefix="dotfiles-macos-") as temporary:
                 path = Path(temporary) / "Brewfile"
@@ -80,15 +127,18 @@ def setup(args):
                 # Inherit stdin for Homebrew/cask authentication. Never capture credentials.
                 result = subprocess.run([str(brew), "bundle", "install", "--no-upgrade", "--file", str(path)],
                                         env=environment, check=False)
+                progress("Homebrew bundle exited with status " + str(result.returncode))
                 if result.returncode:
                     raise ConfigError("Package installation failed. No dotfiles applied; installed packages remain.")
                 installed = installed_packages(brew)
                 for kind, tokens in packages(config, catalog).items():
                     if not set(tokens).issubset(installed[kind]):
                         raise ConfigError("Package installation did not satisfy the selection; dotfiles not applied.")
+        progress("Applying " + str(len(files)) + " managed files")
         for path, text in files.items():
             changed = deploy.write(path, text)
             print(("Updated: " if changed else "Unchanged: ") + str(path.relative_to(Path.home())))
+        progress("Applying " + str(len(pending)) + " macOS preference changes")
         apply_preferences(pending, deploy)
     finally:
         if deploy.backup_dir:
@@ -102,6 +152,7 @@ def setup(args):
 
 
 def verify(args):
+    progress("Checking managed files, Git identity and selected preferences")
     config, catalog = load(ROOT)
     checks = []
 
@@ -159,6 +210,7 @@ def verify(args):
 
 
 def update(_args):
+    progress("Checking repository and fetching the configured upstream")
     def git(*arguments):
         result = run(["git", "-C", ROOT, *arguments])
         if result.returncode:
@@ -200,7 +252,12 @@ def main(argv=None):
     check.set_defaults(function=verify)
     refresh = commands.add_parser("update")
     refresh.set_defaults(function=update)
+    for command in (conf, apply, check, refresh):
+        command.add_argument("--verbose", "-v", action="store_true",
+                             help="Show progress and command exit status on stderr")
     args = parser.parse_args(argv)
+    previous_verbose = diagnostics.enabled
+    diagnostics.enabled = args.verbose
     try:
         return args.function(args)
     except (ConfigError, OSError, UnicodeError) as exc:
@@ -212,6 +269,8 @@ def main(argv=None):
     except KeyboardInterrupt:
         print("\nInterrupted. Completed changes may remain; consult the backup path.", file=sys.stderr)
         return 130
+    finally:
+        diagnostics.enabled = previous_verbose
 
 
 if __name__ == "__main__":

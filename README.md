@@ -41,8 +41,16 @@ In the TUI, use **arrow keys**, **Space** to toggle, **S** to save and **Q/Esc**
 to cancel. Saving does not install software. Setup asks for confirmation;
 `--yes` skips only that confirmation. Do not run with sudo.
 
-The template leaves `user.name` and `user.email` empty. Fill them in the local
-`dotfiles-configurations/config.json` before applying, if desired.
+With the Git module enabled, setup fills missing `user.name` and `user.email`
+from your existing global Git identity, or prompts for them interactively.
+It saves them in local `dotfiles-configurations/config.json` and applies them
+through the managed Git include. Existing JSON values take precedence.
+With `--yes` or no terminal, missing values must be configured beforehand.
+
+Use `./setup-scripts/setup.sh --verbose` (or `-v`) to see stages and command
+exit statuses. The flag is also available on configure, verify and update.
+Diagnostics go to stderr, keeping JSON output on stdout valid; personal
+identity values and captured command output are not logged.
 
 ## Operations
 

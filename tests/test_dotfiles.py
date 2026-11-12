@@ -247,6 +247,7 @@ class DeploymentTests(Sandbox):
 
 class CommandTests(Sandbox):
     def test_apply_and_diagnostic_converge_without_packages(self):
+        self.config["git"].update({"user.name": "Test", "user.email": "test@example.invalid"})
         self.config["package_groups"] = []
         args = type("Args", (), {"plan": False, "json": False, "yes": True})()
         diagnostic = type("Args", (), {"json": True, "check_packages": False})()
@@ -278,6 +279,60 @@ class CommandTests(Sandbox):
              patch("lib.system.os.geteuid", return_value=0):
             with self.assertRaisesRegex(ConfigError, "sudo"):
                 require_mac()
+
+    def test_identity_uses_existing_global_values_without_prompting(self):
+        self.config["git"]["user.name"] = "Local Name"
+        with patch.object(cli, "run", return_value=result(stdout="global@example.invalid\n")) as query, \
+             patch("builtins.input") as prompt:
+            completed = cli.complete_git_identity(self.config, self.catalog, True)
+        self.assertEqual(completed["git"]["user.name"], "Local Name")
+        self.assertEqual(completed["git"]["user.email"], "global@example.invalid")
+        self.assertEqual(self.config["git"]["user.email"], "")
+        query.assert_called_once_with(["git", "config", "--global", "--includes", "--get", "user.email"])
+        prompt.assert_not_called()
+
+    def test_identity_missing_noninteractive_and_cancel_leave_state_unchanged(self):
+        original = copy.deepcopy(self.config)
+        for interactive, failure in ((False, ConfigError), (True, EOFError), (True, KeyboardInterrupt)):
+            with self.subTest(interactive=interactive, failure=failure), \
+                 patch.object(cli, "run", return_value=result(1)), \
+                 patch("builtins.input", side_effect=failure):
+                with self.assertRaises(ConfigError if failure is EOFError else failure):
+                    cli.complete_git_identity(self.config, self.catalog, interactive)
+            self.assertEqual(self.config, original)
+            self.assertEqual(list(self.home.iterdir()), [])
+
+    def test_identity_disabled_module_never_queries_or_prompts(self):
+        self.config["modules"] = []
+        with patch.object(cli, "run") as query, patch("builtins.input") as prompt:
+            self.assertEqual(cli.complete_git_identity(self.config, self.catalog, True), self.config)
+        query.assert_not_called()
+        prompt.assert_not_called()
+
+    def test_identity_prompt_saves_json_and_applies_global_git(self):
+        checkout = self.base / "identity-checkout"
+        directory = checkout / "dotfiles-configurations"
+        directory.mkdir(parents=True)
+        local = directory / "config.json"
+        self.config.update(package_groups=[], modules=["git"])
+        local.write_text(json.dumps(self.config))
+        args = type("Args", (), {"plan": False, "json": False, "yes": False})()
+        with patch.object(cli, "ROOT", checkout), \
+             patch.object(cli, "load", return_value=(self.config, self.catalog)), \
+             patch.object(cli, "require_mac"), patch.object(cli, "run", return_value=result(1)), \
+             patch("sys.stdin.isatty", return_value=True), \
+             patch("builtins.input", side_effect=["y", "", "André Test", "test@example.invalid"]), \
+             patch("sys.stdout", new_callable=io.StringIO):
+            self.assertEqual(cli.setup(args), 0)
+        saved = json.loads(local.read_text())
+        for key, expected in (("user.name", "André Test"), ("user.email", "test@example.invalid")):
+            self.assertEqual(saved["git"][key], expected)
+            query = subprocess.run(["git", "config", "--global", "--includes", "--get", key],
+                                   text=True, capture_output=True)
+            self.assertEqual(query.returncode, 0, query.stderr)
+            self.assertEqual(query.stdout.strip(), expected)
+        self.assertEqual(saved["package_groups"], [])
+        self.assertTrue(list(self.home.rglob("manifest.json")))
 
     def test_defaults_reads_typed_preferences_and_missing_keys(self):
         for data, expected in (({}, {"exists": False}),
@@ -323,6 +378,7 @@ class CommandTests(Sandbox):
         self.assertEqual(list(self.home.iterdir()), [])
 
     def test_failed_package_install_never_changes_dotfiles(self):
+        self.config["git"].update({"user.name": "Test", "user.email": "test@example.invalid"})
         args = type("Args", (), {"plan": False, "json": False, "yes": True})()
         with patch.object(cli, "load", return_value=(self.config, self.catalog)), \
              patch.object(cli, "require_mac"), patch.object(cli, "homebrew", return_value="brew"), \
@@ -382,9 +438,10 @@ class CLITests(Sandbox):
         data["git"]["user.email"] = "private-marker@example.invalid"
         path.write_text(json.dumps(data))
         before = self.snapshot()
-        plan = self.invoke("setup", "--plan", "--json")
+        plan = self.invoke("setup", "--plan", "--json", "--verbose")
         self.assertEqual(plan.returncode, 0, plan.stderr)
         self.assertEqual(json.loads(plan.stdout)["personal_values"], "omitted")
+        self.assertIn("[verbose]", plan.stderr)
         check = self.invoke("verify", "--json")
         self.assertEqual(check.returncode, 1)
         self.assertNotIn("private-marker", plan.stdout + plan.stderr + check.stdout + check.stderr)
