@@ -1,0 +1,49 @@
+name: Validate
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main, 'feature/**', 'fix/**', 'release/**', 'hotfix/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    name: Validate (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-15, macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+      - name: Install static validation tools (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y shellcheck zsh
+      - name: Install static validation tools (macOS)
+        if: runner.os == 'macOS'
+        run: brew list shellcheck >/dev/null 2>&1 || brew install shellcheck
+      - name: Run validation without applying host configuration
+        run: ./tests/validate.sh
+      - name: Parse PowerShell profile
+        shell: pwsh
+        run: |
+          $errors = $null
+          $null = [Management.Automation.Language.Parser]::ParseFile(
+            (Join-Path $PWD 'powershell-profiles/profile.ps1'), [ref]$null, [ref]$errors)
+          if ($errors.Count) { throw ($errors.Message -join '; ') }
+      - name: Validate PR routing
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+        run: |
+          if [ "$BASE" = main ]; then
+            case "$HEAD" in
+              release/*|hotfix/*) ;;
+              *) echo 'Only release/hotfix branches may target main.'; exit 1 ;;
+            esac
+          fi
