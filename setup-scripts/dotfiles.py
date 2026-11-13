@@ -119,6 +119,8 @@ def setup(args):
             deploy.write(config_path, json.dumps(config, ensure_ascii=False, indent=2) + "\n")
             print("Git identity saved to dotfiles-configurations/config.json.")
         if text:
+            progress("Reserving a writable backup directory before package installation")
+            deploy.reserve()
             progress("Installing missing Homebrew packages; package output follows")
             brew = homebrew()
             with tempfile.TemporaryDirectory(prefix="dotfiles-macos-") as temporary:

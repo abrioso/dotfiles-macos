@@ -411,6 +411,46 @@ class CommandTests(Sandbox):
                         else:
                             (self.home / ".config").unlink()
 
+    def test_backup_reservation_failures_prevent_homebrew(self):
+        self.config["modules"] = ["shell"]
+        original = self.home / ".zshrc"
+        original.write_text("export KEEP=1\n")
+        args = type("Args", (), {"plan": False, "json": False, "yes": True})()
+        for operation in ("mkdir", "manifest"):
+            with self.subTest(operation=operation):
+                target = "pathlib.Path.mkdir" if operation == "mkdir" else "lib.deployment.atomic_write"
+                with patch.object(cli, "load", return_value=(self.config, self.catalog)), \
+                     patch.object(cli, "require_mac"), patch.object(cli, "homebrew") as brew, \
+                     patch.object(cli.subprocess, "run") as install, \
+                     patch(target, side_effect=PermissionError("Backup write denied")):
+                    with self.assertRaisesRegex(PermissionError, "Backup write denied"):
+                        cli.setup(args)
+                    brew.assert_not_called()
+                    install.assert_not_called()
+                self.assertEqual(original.read_text(), "export KEEP=1\n")
+                self.assertFalse((self.home / ".config").exists())
+
+    @unittest.skipIf(os.geteuid() == 0, "Root bypasses directory permission checks")
+    def test_unwritable_backup_ancestors_prevent_homebrew(self):
+        self.config["modules"] = ["shell"]
+        args = type("Args", (), {"plan": False, "json": False, "yes": True})()
+        for name in (".local", ".local/state/dotfiles-macos/backups"):
+            with self.subTest(path=name):
+                path = self.home / name
+                path.mkdir(parents=True, exist_ok=True)
+                path.chmod(0o500)
+                try:
+                    with patch.object(cli, "load", return_value=(self.config, self.catalog)), \
+                         patch.object(cli, "require_mac"), patch.object(cli, "homebrew") as brew:
+                        with self.assertRaises(PermissionError):
+                            cli.setup(args)
+                        brew.assert_not_called()
+                    self.assertFalse((self.home / ".zshrc").exists())
+                    self.assertEqual(list(path.iterdir()), [])
+                finally:
+                    path.chmod(0o700)
+                    shutil.rmtree(self.home / ".local")
+
     def test_backup_conflicts_prevent_package_installation(self):
         self.config["git"].update({"user.name": "Test", "user.email": "test@example.invalid"})
         args = type("Args", (), {"plan": False, "json": False, "yes": True})()
@@ -449,6 +489,7 @@ class CommandTests(Sandbox):
         def installer(command, **kwargs):
             if command[0] != "test-brew":
                 return real_run(command, **kwargs)
+            self.assertEqual(json.loads(next(self.home.rglob("manifest.json")).read_text()), [])
             for path, content in profiles.items():
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(content)
@@ -481,7 +522,8 @@ class CommandTests(Sandbox):
             with self.assertRaises(ConfigError):
                 cli.setup(args)
         self.assertEqual(profile.read_text(), conflict)
-        self.assertEqual(list(self.home.iterdir()), [profile])
+        self.assertEqual(set(self.home.iterdir()), {profile, self.home / ".local"})
+        self.assertEqual(json.loads(next(self.home.rglob("manifest.json")).read_text()), [])
 
     def test_preferences_changed_during_install_converge_with_fresh_backup(self):
         from lib.config import PREFERENCES
@@ -531,7 +573,8 @@ class CommandTests(Sandbox):
             with self.assertRaisesRegex(ConfigError, "changed type"):
                 cli.setup(args)
             apply.assert_not_called()
-        self.assertEqual(list(self.home.iterdir()), [])
+        self.assertEqual(list(self.home.iterdir()), [self.home / ".local"])
+        self.assertEqual(json.loads(next(self.home.rglob("manifest.json")).read_text()), [])
 
     def test_failed_package_install_never_changes_dotfiles(self):
         self.config["git"].update({"user.name": "Test", "user.email": "test@example.invalid"})
@@ -541,7 +584,8 @@ class CommandTests(Sandbox):
              patch.object(cli.subprocess, "run", return_value=result(1)):
             with self.assertRaisesRegex(ConfigError, "Package installation failed"):
                 cli.setup(args)
-        self.assertEqual(list(self.home.iterdir()), [])
+        self.assertEqual(list(self.home.iterdir()), [self.home / ".local"])
+        self.assertEqual(json.loads(next(self.home.rglob("manifest.json")).read_text()), [])
 
     def test_preflight_conflict_precedes_install(self):
         (self.home / ".zshrc").symlink_to(self.base / "missing")

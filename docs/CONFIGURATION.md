@@ -165,3 +165,8 @@ Without `--check-packages`, selected packages remain inconclusive. With that
 option, only local Homebrew lists are queried, without auto-update.
 Exact versions, `.app` bundle integrity, licenses, selected fonts, authentication,
 connectivity and service state are not checked.
+
+Before Homebrew installation, setup reserves a private backup run directory and
+atomically writes its manifest. If installation or later preflight fails, the
+reported directory may contain an empty manifest; this means no managed files
+were changed in that run. Package installation itself is not rolled back.

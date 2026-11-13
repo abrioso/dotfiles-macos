@@ -92,9 +92,15 @@ class Deployment:
         if self.backup_dir is None:
             self.preflight()
             stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid4().hex[:8]
-            self.backup_dir = self.home / ".local/state/dotfiles-macos/backups" / stamp
-            assert_safe(self.backup_dir / "manifest.json")
-            self.backup_dir.mkdir(mode=0o700, parents=True)
+            destination = self.home / ".local/state/dotfiles-macos/backups" / stamp
+            assert_safe(destination / "manifest.json")
+            destination.mkdir(mode=0o700, parents=True)
+            self.backup_dir = destination
+
+    def reserve(self):
+        """Prove directory creation and atomic manifest writes before installation."""
+        self._start()
+        self._manifest()
 
     def write(self, path, text):
         path = Path(path)

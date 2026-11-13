@@ -1,12 +1,12 @@
 # Initial validation evidence
 
-Updated: 2026-11-12. Local execution environment: Linux, Python 3.12.14,
+Updated: 2026-11-13. Local execution environment: Linux, Python 3.12.14,
 the environment's Zsh and ShellCheck 0.11.0. No test applied settings to the
 user's Mac, started runtimes or installed packages from the catalog.
 
 ## Completed
 
-- **54 automated tests collected**: 53 pass locally on Linux; one native macOS
+- **56 automated tests collected**: 55 pass locally on Linux; one native macOS
   preference test runs only on the macOS CI runners. Coverage includes a real pseudo-terminal TUI,
   cancellation without writes, saved toggles, strict validation, opt-outs,
   read-only plans/diagnostics without identity disclosure, independent copies,
@@ -34,6 +34,9 @@ user's Mac, started runtimes or installed packages from the catalog.
 - Destination-parent regressions cover regular files and FIFOs at three managed
   profile ancestors, confirming refusal before Homebrew with original content and
   file metadata preserved.
+- Backup reservation tests cover directory/manifest write errors and real
+  unwritable ancestors (non-root runners), with no Homebrew execution or profile
+  changes. Install callbacks also verify that the run manifest already exists.
 - Python syntax analysis using the 3.9 grammar; valid template and theme JSON.
 - Bash/POSIX shell and Zsh syntax, ShellCheck without findings and Git whitespace checks.
 - **34 unique catalog tokens confirmed** through the official Homebrew API, with
